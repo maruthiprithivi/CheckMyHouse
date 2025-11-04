@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getClickHouseClient, detectClusterConfig, buildClusterQuery } from '@/lib/clickhouse';
+import { getClientFromRequest, detectClusterConfig, buildClusterQuery } from '@/lib/clickhouse';
 import { QUERY_ANALYZER_AGGREGATE } from '@/lib/queries';
 
 export async function GET(request) {
@@ -11,7 +11,7 @@ export async function GET(request) {
     const offset = parseInt(searchParams.get('offset')) || 0;
     const minExecutions = parseInt(searchParams.get('min_executions')) || 5;
 
-    const client = getClickHouseClient();
+    const client = getClientFromRequest();
 
     // Detect cluster configuration
     const clusterConfig = await detectClusterConfig(client);

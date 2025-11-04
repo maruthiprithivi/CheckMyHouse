@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getClickHouseClient, detectClusterConfig, buildClusterQuery } from '@/lib/clickhouse';
+import { getClientFromRequest, detectClusterConfig, buildClusterQuery } from '@/lib/clickhouse';
 import { QUERY_DRILLDOWN } from '@/lib/queries';
 
 export async function GET(request) {
@@ -18,7 +18,7 @@ export async function GET(request) {
       );
     }
 
-    const client = getClickHouseClient();
+    const client = getClientFromRequest();
     const clusterConfig = await detectClusterConfig(client);
 
     const query = buildClusterQuery(

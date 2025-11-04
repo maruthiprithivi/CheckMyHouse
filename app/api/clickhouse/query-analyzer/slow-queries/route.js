@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getClickHouseClient, detectClusterConfig, buildClusterQuery } from '@/lib/clickhouse';
+import { getClientFromRequest, detectClusterConfig, buildClusterQuery } from '@/lib/clickhouse';
 import { SLOW_QUERIES } from '@/lib/queries';
 
 export async function GET(request) {
@@ -9,7 +9,7 @@ export async function GET(request) {
     const thresholdMs = parseInt(searchParams.get('threshold_ms')) || 1000;
     const limit = Math.min(parseInt(searchParams.get('limit')) || 100, 500);
 
-    const client = getClickHouseClient();
+    const client = getClientFromRequest();
     const clusterConfig = await detectClusterConfig(client);
 
     const query = buildClusterQuery(

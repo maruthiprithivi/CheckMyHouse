@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getClickHouseClient } from '@/lib/clickhouse';
+import { getClientFromRequest } from '@/lib/clickhouse';
 
 export async function GET(request) {
   try {
@@ -14,7 +14,7 @@ export async function GET(request) {
       );
     }
 
-    const client = getClickHouseClient();
+    const client = getClientFromRequest();
 
     // Get table statistics
     const statsQuery = `

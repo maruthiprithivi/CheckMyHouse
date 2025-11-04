@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getClickHouseClient } from '@/lib/clickhouse';
+import { getClientFromRequest } from '@/lib/clickhouse';
 import { GET_MATERIALIZED_VIEWS, GET_TABLE_DEPENDENCIES } from '@/lib/queries';
 
 export async function GET(request) {
@@ -7,7 +7,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const database = searchParams.get('database');
 
-    const client = getClickHouseClient();
+    const client = getClientFromRequest();
 
     // Get all materialized views
     const mvResult = await client.query({

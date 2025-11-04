@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getClickHouseClient } from '@/lib/clickhouse';
+import { getClientFromRequest } from '@/lib/clickhouse';
 import { GET_TABLES, GET_TABLE_COLUMNS, GET_TABLE_PARTS } from '@/lib/queries';
 
 export async function GET(request) {
@@ -16,7 +16,7 @@ export async function GET(request) {
       );
     }
 
-    const client = getClickHouseClient();
+    const client = getClientFromRequest();
 
     // If specific table requested with details
     if (table && details) {

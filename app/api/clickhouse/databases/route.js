@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getClickHouseClient } from '@/lib/clickhouse';
+import { getClientFromRequest } from '@/lib/clickhouse';
 import { GET_DATABASES } from '@/lib/queries';
 
 export async function GET(request) {
   try {
-    const client = getClickHouseClient();
+    const client = getClientFromRequest();
 
     const result = await client.query({
       query: GET_DATABASES,
