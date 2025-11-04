@@ -24,7 +24,7 @@ export async function POST(request) {
 
     // Store config in cookies (httpOnly for security)
     // Note: Don't store sensitive data in production - use session storage instead
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set('clickhouse_config', encodeURIComponent(JSON.stringify(config)), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

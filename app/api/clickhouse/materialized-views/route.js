@@ -7,7 +7,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const database = searchParams.get('database');
 
-    const client = getClientFromRequest();
+    const client = await getClientFromRequest();
 
     // Get all materialized views
     const mvResult = await client.query({

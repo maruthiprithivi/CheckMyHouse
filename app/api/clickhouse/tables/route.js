@@ -16,7 +16,7 @@ export async function GET(request) {
       );
     }
 
-    const client = getClientFromRequest();
+    const client = await getClientFromRequest();
 
     // If specific table requested with details
     if (table && details) {

@@ -11,7 +11,7 @@ export async function GET(request) {
     const offset = parseInt(searchParams.get('offset')) || 0;
     const minExecutions = parseInt(searchParams.get('min_executions')) || 5;
 
-    const client = getClientFromRequest();
+    const client = await getClientFromRequest();
 
     // Detect cluster configuration
     const clusterConfig = await detectClusterConfig(client);

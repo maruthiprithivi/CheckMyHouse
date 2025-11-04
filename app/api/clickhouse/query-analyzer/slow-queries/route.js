@@ -9,7 +9,7 @@ export async function GET(request) {
     const thresholdMs = parseInt(searchParams.get('threshold_ms')) || 1000;
     const limit = Math.min(parseInt(searchParams.get('limit')) || 100, 500);
 
-    const client = getClientFromRequest();
+    const client = await getClientFromRequest();
     const clusterConfig = await detectClusterConfig(client);
 
     const query = buildClusterQuery(

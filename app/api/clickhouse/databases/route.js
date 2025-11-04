@@ -4,7 +4,7 @@ import { GET_DATABASES } from '@/lib/queries';
 
 export async function GET(request) {
   try {
-    const client = getClientFromRequest();
+    const client = await getClientFromRequest();
 
     const result = await client.query({
       query: GET_DATABASES,
