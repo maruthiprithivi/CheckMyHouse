@@ -60,6 +60,7 @@ export default function TableDetailsView({ database, table }) {
     { id: 'statistics', label: 'Statistics', icon: '📊' },
     { id: 'parts', label: 'Parts & Partitions', icon: '🧩' },
     { id: 'ddl', label: 'DDL', icon: '⚙️' },
+    { id: 'recommendations', label: 'Recommendations', icon: '💡' },
   ];
 
   return (
@@ -165,6 +166,9 @@ export default function TableDetailsView({ database, table }) {
           )}
           {activeTab === 'ddl' && (
             <DDLTab ddl={table.create_table_query} />
+          )}
+          {activeTab === 'recommendations' && stats && (
+            <RecommendationsTab stats={stats} table={table} />
           )}
         </div>
       )}
@@ -377,6 +381,21 @@ function DDLTab({ ddl }) {
         </SyntaxHighlighter>
       </CardContent>
     </Card>
+  );
+}
+
+function RecommendationsTab({ stats, table }) {
+  // Import dynamically to avoid circular dependencies
+  const { generateTableHealthRecommendations } = require('@/utils/recommendations');
+  const RecommendationsPanel = require('@/components/Recommendations/RecommendationsPanel').default;
+
+  const recommendations = generateTableHealthRecommendations(stats);
+
+  return (
+    <RecommendationsPanel
+      recommendations={recommendations}
+      title={`Recommendations for ${table.name}`}
+    />
   );
 }
 

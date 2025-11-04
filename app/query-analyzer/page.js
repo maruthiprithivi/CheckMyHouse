@@ -11,8 +11,12 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import AggregateQueryList from '@/components/QueryAnalyzer/AggregateQueryList';
 import MetricsGrid from '@/components/QueryAnalyzer/MetricsGrid';
 import InsightsPanel from '@/components/QueryAnalyzer/InsightsPanel';
+import RecommendationsPanel from '@/components/Recommendations/RecommendationsPanel';
+import { generateQueryOptimizations } from '@/utils/recommendations';
 import QueryDrilldownView from '@/components/QueryAnalyzer/QueryDrilldownView';
+import ExportMenu from '@/components/ui/ExportMenu';
 import { SORT_OPTIONS, TIME_RANGES } from '@/utils/constants';
+import { formatQueryMetricsForExport } from '@/utils/exportUtils';
 
 export default function QueryAnalyzer() {
   const router = useRouter();
@@ -140,6 +144,13 @@ export default function QueryAnalyzer() {
           <InsightsPanel queryData={selectedQuery} />
 
           <div className="mt-6">
+            <RecommendationsPanel
+              recommendations={generateQueryOptimizations(selectedQuery)}
+              title="Query Optimizations"
+            />
+          </div>
+
+          <div className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Query Executions Timeline</CardTitle>
@@ -221,9 +232,16 @@ export default function QueryAnalyzer() {
               <p className="text-sm text-muted-foreground">
                 Showing {queries.length} queries
               </p>
-              <Button onClick={fetchQueries} variant="outline" size="sm">
-                🔄 Refresh
-              </Button>
+              <div className="flex gap-2">
+                <ExportMenu
+                  data={queries}
+                  filename={`query-analysis-${new Date().toISOString().split('T')[0]}`}
+                  formatData={formatQueryMetricsForExport}
+                />
+                <Button onClick={fetchQueries} variant="outline" size="sm">
+                  🔄 Refresh
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
