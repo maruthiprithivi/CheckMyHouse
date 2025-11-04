@@ -15,28 +15,49 @@ A comprehensive, visually engaging database explorer and query analyzer for Clic
   - Thread utilization
 
 - **Aggregate View**: Group queries by `normalized_query_hash` for pattern analysis
-- **Drill-Down**: Explore individual query executions with detailed profiling
+- **Drill-Down View**: Explore individual query executions with:
+  - Time-series charts (duration, memory over time)
+  - Detailed profiling metrics
+  - Expandable row details
+  - SQL syntax highlighting
 - **Performance Insights**: Automatic bottleneck detection and recommendations
 - **Cluster-Aware**: Supports both ClickHouse Cloud and OSS with automatic cluster detection
 
-### 📊 Database Explorer
-- Database and table discovery
-- Table schema visualization
-- Column types and constraints
-- Table statistics (row counts, sizes, parts)
-- Table engine information
-- Partitions and indexes
+### 📊 Table Explorer
+- **Visual Table Browser**: Card-based interface with table engines
+- **Detailed Table View** with tabs:
+  - **Schema**: Columns, data types, keys, codecs
+  - **Statistics**: Row counts, compression ratios, storage sizes
+  - **Parts & Partitions**: Active parts with modification times
+  - **DDL**: CREATE TABLE statement with syntax highlighting
+- Table engine information and configuration
+- Partition and sorting key visualization
+- Compression analytics
 
 ### 👁️ Materialized Views Explorer
-- List all materialized views
-- Source and target table mapping
-- SQL definition viewer
-- Dependency tracking
+- Discover all materialized views across databases
+- **Data Flow Visualization**: Source → MV → Target mapping
+- **SQL Transformation Viewer** with syntax highlighting
+- **Complexity Analysis**: Identify simple vs complex transformations
+- Dependency tracking and impact analysis
+- Source and target table relationships
 
-### 🔗 Data Lineage (Planned)
-- Visual graph of data flow
-- Table dependencies
-- Materialized view relationships
+### 🔗 Data Lineage Graph
+- **Interactive Visual Graph** powered by React Flow
+- Table and materialized view nodes with distinct styling
+- Real-time dependency mapping
+- Pan, zoom, and drag functionality
+- Minimap for large dependency graphs
+- Click nodes for detailed information
+- Filter by database
+
+### 🐌 Slow Queries Dashboard
+- Configurable performance thresholds
+- Real-time slow query detection
+- Summary statistics and trends
+- Query detail view with full SQL
+- Error tracking and analysis
+- Performance indicators with color coding
 
 ### 💾 Memory Management
 - Virtual scrolling for large datasets
@@ -50,9 +71,10 @@ A comprehensive, visually engaging database explorer and query analyzer for Clic
 - **Framework**: Next.js 15 (App Router, JavaScript)
 - **UI**: Tailwind CSS + Custom Components
 - **ClickHouse Client**: @clickhouse/client
-- **Virtualization**: react-window
-- **Charts**: Recharts (ready for integration)
-- **Data Lineage**: ReactFlow (ready for integration)
+- **Virtualization**: react-window + react-virtualized-auto-sizer
+- **Charts**: Recharts for time-series and performance visualization
+- **Data Lineage**: ReactFlow for interactive dependency graphs
+- **Syntax Highlighting**: react-syntax-highlighter for SQL
 
 ## Installation
 
@@ -205,31 +227,35 @@ npm run lint
 
 ### Phase 1: Foundation (✅ Complete)
 - [x] ClickHouse connection with cluster detection
-- [x] Database and table explorer
+- [x] Database and table discovery
 - [x] Query analyzer with comprehensive metrics
 - [x] Memory-optimized rendering
 - [x] Performance insights
 
-### Phase 2: Advanced Features (In Progress)
-- [ ] Table explorer with virtual scrolling
-- [ ] Materialized views explorer
-- [ ] Visual data lineage graph
-- [ ] Table statistics dashboard
-- [ ] Query drill-down with time-series charts
+### Phase 2: Advanced Features (✅ Complete)
+- [x] Table explorer with detailed views
+- [x] Materialized views explorer
+- [x] Visual data lineage graph
+- [x] Table statistics dashboard
+- [x] Query drill-down with time-series charts
+- [x] Slow queries dashboard
+- [x] SQL syntax highlighting
+- [x] Charts and visualizations (Recharts)
 
-### Phase 3: Enhanced Analysis
-- [ ] Slow query dashboard
-- [ ] Resource hog detection
-- [ ] Cache performance analyzer
+### Phase 3: Future Enhancements
+- [ ] Resource hog detection dashboard
 - [ ] Query anomaly detection
 - [ ] Export to CSV/JSON
+- [ ] Query comparison tool
+- [ ] Custom alert configuration
 
 ### Phase 4: Polish
 - [ ] Dark mode
-- [ ] Query favorites
-- [ ] Custom dashboards
-- [ ] Alert configuration
-- [ ] Multi-cluster support
+- [ ] Query favorites and bookmarks
+- [ ] Custom dashboards builder
+- [ ] Advanced filtering
+- [ ] Multi-cluster management
+- [ ] Query recommendations
 
 ## Contributing
 
