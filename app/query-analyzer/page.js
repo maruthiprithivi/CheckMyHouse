@@ -11,6 +11,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import AggregateQueryList from '@/components/QueryAnalyzer/AggregateQueryList';
 import MetricsGrid from '@/components/QueryAnalyzer/MetricsGrid';
 import InsightsPanel from '@/components/QueryAnalyzer/InsightsPanel';
+import QueryDrilldownView from '@/components/QueryAnalyzer/QueryDrilldownView';
 import { SORT_OPTIONS, TIME_RANGES } from '@/utils/constants';
 
 export default function QueryAnalyzer() {
@@ -97,7 +98,7 @@ export default function QueryAnalyzer() {
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>Query Details</span>
+                <span>Query Pattern Analysis</span>
                 <span className="text-sm font-normal text-muted-foreground">
                   Hash: {selectedQuery.normalized_query_hash.toString()}
                 </span>
@@ -137,6 +138,20 @@ export default function QueryAnalyzer() {
           </Card>
 
           <InsightsPanel queryData={selectedQuery} />
+
+          <div className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Query Executions Timeline</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <QueryDrilldownView
+                  queryHash={selectedQuery.normalized_query_hash.toString()}
+                  queryPattern={selectedQuery.normalized_query}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     );

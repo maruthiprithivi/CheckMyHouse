@@ -7,6 +7,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: '📊' },
   { href: '/tables', label: 'Tables', icon: '📁' },
   { href: '/query-analyzer', label: 'Query Analyzer', icon: '🔍' },
+  { href: '/slow-queries', label: 'Slow Queries', icon: '🐌' },
   { href: '/materialized-views', label: 'Materialized Views', icon: '👁️' },
   { href: '/lineage', label: 'Data Lineage', icon: '🔗' },
 ];
