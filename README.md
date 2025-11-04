@@ -59,6 +59,28 @@ A comprehensive, visually engaging database explorer and query analyzer for Clic
 - Error tracking and analysis
 - Performance indicators with color coding
 
+### 📤 Export Functionality
+- **CSV Export**: Download query metrics, tables, and materialized views
+- **JSON Export**: Export data in JSON format for further analysis
+- **Formatted Data**: Pre-formatted exports with all key metrics
+- **One-Click Download**: Dropdown menu integration in query analyzer
+
+### 💡 Recommendations Engine
+- **Index Recommendations**: Suggests skip indexes, bloom filters based on query patterns
+- **Query Optimizations**: Detects I/O bottlenecks, cache inefficiency, memory issues
+- **Table Health**: Identifies excessive parts, poor compression, partitioning needs
+- **Materialized View Opportunities**: Suggests MVs for frequent aggregations
+- **Severity Indicators**: Color-coded recommendations (critical/warning/info)
+- **Impact Assessment**: Effort and impact estimates for each recommendation
+
+### 📊 Real-Time Monitoring
+- **Live Dashboard**: Auto-refreshing metrics every 30 seconds
+- **Summary Cards**: Total queries, average duration, error rate, table count
+- **Query Type Distribution**: Pie chart visualization of SELECT/INSERT/ALTER queries
+- **Top Slow Queries**: Bar chart of slowest queries by duration
+- **Memory Analysis**: Visual breakdown of memory usage by query
+- **System Health**: Performance, error rate, and system load indicators
+
 ### 💾 Memory Management
 - Virtual scrolling for large datasets
 - Pagination and lazy loading
@@ -147,14 +169,23 @@ CheckMyHouse/
 │   │   ├── connect/             # Connection handling
 │   │   ├── databases/           # Database discovery
 │   │   ├── tables/              # Table metadata
-│   │   └── query-analyzer/      # Query analysis endpoints
+│   │   ├── query-analyzer/      # Query analysis endpoints
+│   │   ├── lineage/             # Data lineage endpoints
+│   │   └── materialized-views/  # MV discovery endpoints
 │   ├── dashboard/               # Main dashboard
 │   ├── query-analyzer/          # Query analyzer UI
+│   ├── tables/                  # Table explorer UI
+│   ├── materialized-views/      # MV explorer UI
+│   ├── lineage/                 # Data lineage graph UI
+│   ├── slow-queries/            # Slow queries dashboard
+│   ├── monitoring/              # Real-time monitoring dashboard
 │   └── globals.css              # Global styles
 ├── components/
 │   ├── Dashboard/               # Dashboard components
 │   ├── QueryAnalyzer/           # Query analyzer components
-│   └── ui/                      # Reusable UI components
+│   ├── TableExplorer/           # Table browser components
+│   ├── Recommendations/         # Recommendations panel
+│   └── ui/                      # Reusable UI components (ExportMenu, etc.)
 ├── lib/
 │   ├── clickhouse.js            # ClickHouse client & utilities
 │   └── queries.js               # SQL query templates
@@ -162,6 +193,8 @@ CheckMyHouse/
 │   ├── formatters.js            # Data formatting utilities
 │   ├── performanceIndicators.js # Performance thresholds & insights
 │   ├── memoryManagement.js      # Memory optimization utilities
+│   ├── exportUtils.js           # CSV/JSON export utilities
+│   ├── recommendations.js       # Recommendations engine
 │   └── constants.js             # Application constants
 └── public/                      # Static assets
 ```
@@ -242,20 +275,24 @@ npm run lint
 - [x] SQL syntax highlighting
 - [x] Charts and visualizations (Recharts)
 
-### Phase 3: Future Enhancements
+### Phase 3: Enterprise Features (✅ Complete)
+- [x] Export to CSV/JSON
+- [x] Query recommendations engine
+- [x] Table health recommendations
+- [x] Index optimization suggestions
+- [x] Real-time monitoring dashboard
+- [x] Performance insights and alerts
+
+### Phase 4: Future Enhancements
 - [ ] Resource hog detection dashboard
-- [ ] Query anomaly detection
-- [ ] Export to CSV/JSON
+- [ ] Query anomaly detection with ML
 - [ ] Query comparison tool
 - [ ] Custom alert configuration
-
-### Phase 4: Polish
 - [ ] Dark mode
 - [ ] Query favorites and bookmarks
 - [ ] Custom dashboards builder
-- [ ] Advanced filtering
+- [ ] Advanced filtering and saved filters
 - [ ] Multi-cluster management
-- [ ] Query recommendations
 
 ## Contributing
 
