@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getClientFromRequest, detectClusterConfig, buildClusterQuery } from '@/lib/clickhouse';
+import {
+  getClientFromRequest,
+  detectClusterConfig,
+  buildClusterQuery,
+  executeQuerySafe,
+  getSystemCapabilities,
+} from '@/lib/clickhouse';
 import { QUERY_ANALYZER_AGGREGATE } from '@/lib/queries';
+import { formatErrorResponse, createPermissionErrorResponse } from '@/lib/errors';
+import globalCache, { CacheTTL } from '@/lib/cache';
 
 export async function GET(request) {
   try {
@@ -12,6 +20,33 @@ export async function GET(request) {
     const minExecutions = parseInt(searchParams.get('min_executions')) || 5;
 
     const client = await getClientFromRequest();
+
+    // Check system capabilities
+    const capabilities = await getSystemCapabilities(client);
+    if (!capabilities.hasQueryLog) {
+      return NextResponse.json(
+        createPermissionErrorResponse('system.query_log', 'Query Analyzer'),
+        { status: 403 }
+      );
+    }
+
+    // Generate cache key
+    const cacheKey = globalCache.generateKey('query_analyzer', {
+      days,
+      sortColumn,
+      limit,
+      offset,
+      minExecutions,
+    });
+
+    // Check cache
+    const cached = globalCache.get(cacheKey);
+    if (cached) {
+      return NextResponse.json({
+        ...cached,
+        cached: true,
+      });
+    }
 
     // Detect cluster configuration
     const clusterConfig = await detectClusterConfig(client);
@@ -28,16 +63,33 @@ export async function GET(request) {
       .replace('{offset}', offset)
       .replace('{min_executions}', minExecutions);
 
-    const result = await client.query({
-      query,
-      format: 'JSONEachRow',
-    });
+    // Execute query with error handling
+    const result = await executeQuerySafe(client, query);
 
-    const queries = await result.json();
+    if (!result.success) {
+      if (result.permissionDenied) {
+        return NextResponse.json(
+          createPermissionErrorResponse('system.query_log', 'Query Analyzer'),
+          { status: 403 }
+        );
+      }
 
-    return NextResponse.json({
-      queries,
-      total: queries.length,
+      if (result.quotaExceeded) {
+        return NextResponse.json(
+          formatErrorResponse(result.error, true),
+          { status: 429 }
+        );
+      }
+
+      return NextResponse.json(
+        formatErrorResponse(result.error, false),
+        { status: 500 }
+      );
+    }
+
+    const responseData = {
+      queries: result.data,
+      total: result.data.length,
       cluster: clusterConfig,
       params: {
         days,
@@ -46,11 +98,16 @@ export async function GET(request) {
         offset,
         minExecutions,
       },
-    });
+    };
+
+    // Cache the response
+    globalCache.set(cacheKey, responseData, CacheTTL.QUERY_ANALYZER);
+
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error('Error fetching query analyzer data:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch query analyzer data' },
+      formatErrorResponse(error, false),
       { status: 500 }
     );
   }

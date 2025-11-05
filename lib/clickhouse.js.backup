@@ -1,17 +1,8 @@
 import { createClient } from '@clickhouse/client';
 import { cookies } from 'next/headers';
-import {
-  parseClickHouseError,
-  isPermissionError,
-  isQuotaError,
-  ErrorTypes,
-  createPermissionErrorResponse,
-} from './errors';
-import globalCache, { CacheTTL } from './cache';
 
 let clickhouseClient = null;
 let currentConfig = null;
-let systemCapabilities = null;
 
 /**
  * Get connection config from cookies
@@ -55,8 +46,6 @@ export async function getClientFromRequest() {
  */
 export function initClickHouseClient(config) {
   currentConfig = config;
-  systemCapabilities = null; // Clear capabilities on reconnect
-
   clickhouseClient = createClient({
     url: config.url || config.host || 'http://localhost:8123',
     username: config.username || 'default',
@@ -119,16 +108,9 @@ export async function testConnection(config) {
 }
 
 /**
- * Detect cluster configuration with permission handling
+ * Detect cluster configuration
  */
 export async function detectClusterConfig(client) {
-  // Check cache first
-  const cacheKey = 'cluster_config';
-  const cached = globalCache.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
-
   try {
     const result = await client.query({
       query: `
@@ -148,71 +130,43 @@ export async function detectClusterConfig(client) {
     const clusters = await result.json();
 
     // If we got results, it's OSS (not Cloud)
-    let config;
     if (clusters.length > 0) {
       const uniqueClusters = [...new Set(clusters.map(c => c.cluster))];
       const hasSharding = clusters.some(c => c.shard_num > 1);
       const hasReplicas = clusters.filter(c => c.cluster === uniqueClusters[0]).length > 1;
 
-      config = {
+      return {
         isClustered: true,
-        isCloud: false,
+        isCloud: false, // OSS with accessible system.clusters
         clusters: uniqueClusters,
         defaultCluster: uniqueClusters[0] || null,
         hasSharding,
         hasReplicas,
         nodes: clusters,
-        hasSystemClustersAccess: true,
-      };
-    } else {
-      config = {
-        isClustered: false,
-        isCloud: false,
-        clusters: [],
-        defaultCluster: null,
-        hasSharding: false,
-        hasReplicas: false,
-        nodes: [],
-        hasSystemClustersAccess: true,
       };
     }
 
-    // Cache the result
-    globalCache.set(cacheKey, config, CacheTTL.CLUSTER_CONFIG);
-    return config;
-  } catch (error) {
-    const parsedError = parseClickHouseError(error);
-
-    // If permission denied, assume single-node and cache the result
-    if (parsedError.type === ErrorTypes.PERMISSION_DENIED) {
-      console.log('system.clusters not accessible (permission denied) - assuming single node');
-      const config = {
-        isClustered: false,
-        isCloud: true,
-        clusters: [],
-        defaultCluster: null,
-        hasSharding: false,
-        hasReplicas: false,
-        nodes: [],
-        hasSystemClustersAccess: false,
-        permissionError: true,
-      };
-      globalCache.set(cacheKey, config, CacheTTL.CLUSTER_CONFIG);
-      return config;
-    }
-
-    // Other errors - return safe defaults without caching
-    console.error('Error detecting cluster config:', parsedError.message);
+    // Empty result - single node OSS or restricted access
     return {
       isClustered: false,
-      isCloud: true,
+      isCloud: false, // Could be single-node OSS
       clusters: [],
       defaultCluster: null,
       hasSharding: false,
       hasReplicas: false,
       nodes: [],
-      hasSystemClustersAccess: false,
-      error: parsedError.message,
+    };
+  } catch (error) {
+    // If system.clusters is not accessible, likely Cloud or restricted OSS
+    console.log('Unable to detect cluster config:', error.message);
+    return {
+      isClustered: false,
+      isCloud: true, // Assume Cloud if system.clusters not accessible
+      clusters: [],
+      defaultCluster: null,
+      hasSharding: false,
+      hasReplicas: false,
+      nodes: [],
     };
   }
 }
@@ -232,12 +186,11 @@ export function buildClusterQuery(baseQuery, table, clusterConfig) {
 }
 
 /**
- * Execute query with automatic retries and error handling
+ * Execute query with automatic retries
  */
 export async function executeQuery(client, query, options = {}) {
   const maxRetries = options.maxRetries || 3;
   const retryDelay = options.retryDelay || 1000;
-  const skipRetryOnPermission = options.skipRetryOnPermission !== false;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -249,123 +202,14 @@ export async function executeQuery(client, query, options = {}) {
 
       return await result.json();
     } catch (error) {
-      const parsedError = parseClickHouseError(error);
-
-      // Don't retry permission errors
-      if (skipRetryOnPermission && parsedError.type === ErrorTypes.PERMISSION_DENIED) {
-        throw parsedError;
-      }
-
-      // Don't retry quota errors immediately
-      if (parsedError.type === ErrorTypes.QUOTA_EXCEEDED) {
-        throw parsedError;
-      }
-
-      // Last attempt - throw error
       if (attempt === maxRetries - 1) {
-        throw parsedError;
+        throw error;
       }
 
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, retryDelay * (attempt + 1)));
     }
   }
-}
-
-/**
- * Execute query with permission check
- * Returns { success, data, error, permissionDenied }
- */
-export async function executeQuerySafe(client, query, options = {}) {
-  try {
-    const data = await executeQuery(client, query, options);
-    return {
-      success: true,
-      data,
-      error: null,
-      permissionDenied: false,
-    };
-  } catch (error) {
-    const parsedError = parseClickHouseError(error);
-    return {
-      success: false,
-      data: null,
-      error: parsedError,
-      permissionDenied: parsedError.type === ErrorTypes.PERMISSION_DENIED,
-      quotaExceeded: parsedError.type === ErrorTypes.QUOTA_EXCEEDED,
-    };
-  }
-}
-
-/**
- * Detect system capabilities (what features are available)
- */
-export async function detectSystemCapabilities(client) {
-  // Return cached capabilities if available
-  if (systemCapabilities) {
-    return systemCapabilities;
-  }
-
-  const capabilities = {
-    hasQueryLog: false,
-    hasClusters: false,
-    hasParts: false,
-    hasProcesses: false,
-    checkedAt: new Date().toISOString(),
-  };
-
-  // Test system.query_log access
-  const queryLogResult = await executeQuerySafe(
-    client,
-    'SELECT 1 FROM system.query_log LIMIT 1',
-    { maxRetries: 1 }
-  );
-  capabilities.hasQueryLog = queryLogResult.success;
-
-  // Test system.clusters access
-  const clustersResult = await executeQuerySafe(
-    client,
-    'SELECT 1 FROM system.clusters LIMIT 1',
-    { maxRetries: 1 }
-  );
-  capabilities.hasClusters = clustersResult.success;
-
-  // Test system.parts access
-  const partsResult = await executeQuerySafe(
-    client,
-    'SELECT 1 FROM system.parts LIMIT 1',
-    { maxRetries: 1 }
-  );
-  capabilities.hasParts = partsResult.success;
-
-  // Test system.processes access
-  const processesResult = await executeQuerySafe(
-    client,
-    'SELECT 1 FROM system.processes LIMIT 1',
-    { maxRetries: 1 }
-  );
-  capabilities.hasProcesses = processesResult.success;
-
-  // Cache capabilities
-  systemCapabilities = capabilities;
-  return capabilities;
-}
-
-/**
- * Get cached capabilities or detect them
- */
-export async function getSystemCapabilities(client) {
-  if (!systemCapabilities) {
-    await detectSystemCapabilities(client);
-  }
-  return systemCapabilities;
-}
-
-/**
- * Clear capabilities cache (call when connection changes)
- */
-export function clearCapabilitiesCache() {
-  systemCapabilities = null;
 }
 
 /**
@@ -387,6 +231,7 @@ export async function getClickHouseVersion(client) {
     const data = await result.json();
     const versionString = data[0]?.version || '0.0.0';
 
+    // Parse version string (e.g., "20.3.4.11" or "21.8.0.1")
     const versionMatch = versionString.match(/^(\d+)\.(\d+)\.(\d+)/);
     if (versionMatch) {
       cachedVersion = {
@@ -396,6 +241,7 @@ export async function getClickHouseVersion(client) {
         patch: parseInt(versionMatch[3], 10),
       };
     } else {
+      // Fallback to assume latest version if parsing fails
       cachedVersion = {
         full: versionString,
         major: 24,
@@ -407,6 +253,7 @@ export async function getClickHouseVersion(client) {
     return cachedVersion;
   } catch (error) {
     console.error('Error detecting ClickHouse version:', error);
+    // Return a safe default (assume older version to use compatible queries)
     cachedVersion = {
       full: 'unknown',
       major: 19,

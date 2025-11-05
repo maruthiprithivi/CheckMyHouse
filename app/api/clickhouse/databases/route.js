@@ -25,7 +25,7 @@ export async function GET(request) {
 
           return {
             ...db,
-            table_count: countData[0]?.table_count || 0,
+            table_count: Number(countData[0]?.table_count || 0),
           };
         } catch (error) {
           return {

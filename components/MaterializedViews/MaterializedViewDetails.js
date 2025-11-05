@@ -10,10 +10,6 @@ import { github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 SyntaxHighlighter.registerLanguage('sql', sql);
 
 export default function MaterializedViewDetails({ view }) {
-  const isSimpleSelect = view.select_query && !view.select_query.includes('JOIN') &&
-    !view.select_query.includes('GROUP BY') &&
-    !view.select_query.includes('WHERE');
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -27,11 +23,6 @@ export default function MaterializedViewDetails({ view }) {
               </CardTitle>
               <div className="flex items-center gap-2">
                 <Badge variant="info">{view.engine}</Badge>
-                {isSimpleSelect ? (
-                  <Badge variant="success">Simple Transformation</Badge>
-                ) : (
-                  <Badge variant="warning">Complex Transformation</Badge>
-                )}
               </div>
             </div>
           </div>
@@ -119,23 +110,6 @@ export default function MaterializedViewDetails({ view }) {
                 </div>
               </>
             )}
-          </div>
-
-          {/* Transformation Complexity */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="font-medium">Transformation Complexity:</span>
-              {isSimpleSelect ? (
-                <Badge variant="success">Straightforward</Badge>
-              ) : (
-                <Badge variant="warning">Complex</Badge>
-              )}
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {isSimpleSelect
-                ? 'This materialized view performs a simple SELECT without complex transformations.'
-                : 'This materialized view includes complex transformations such as JOINs, aggregations, or filters.'}
-            </div>
           </div>
         </CardContent>
       </Card>
