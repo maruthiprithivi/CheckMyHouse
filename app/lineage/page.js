@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useRequireAuth } from '@/hooks/useAuth';
 import Navigation from '@/components/Dashboard/Navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -11,6 +12,7 @@ import LineageGraph from '@/components/LineageGraph/LineageGraph';
 
 export default function DataLineage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
   const [clusterConfig, setClusterConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [databases, setDatabases] = useState([]);
@@ -18,26 +20,17 @@ export default function DataLineage() {
   const [lineageData, setLineageData] = useState(null);
 
   useEffect(() => {
-    const config = localStorage.getItem('clickhouse_config');
-    if (!config) {
-      router.push('/');
-      return;
+    if (isAuthenticated) {
+      fetchDatabases();
+      fetchLineageData();
     }
-
-    const cluster = localStorage.getItem('cluster_config');
-    if (cluster) {
-      setClusterConfig(JSON.parse(cluster));
-    }
-
-    fetchDatabases();
-    fetchLineageData();
-  }, [router]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (selectedDatabase || selectedDatabase === '') {
+    if (isAuthenticated && (selectedDatabase || selectedDatabase === '')) {
       fetchLineageData(selectedDatabase);
     }
-  }, [selectedDatabase]);
+  }, [selectedDatabase, isAuthenticated]);
 
   const fetchDatabases = async () => {
     try {
@@ -71,6 +64,14 @@ export default function DataLineage() {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
