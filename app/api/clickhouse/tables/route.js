@@ -20,20 +20,23 @@ export async function GET(request) {
 
     // If specific table requested with details
     if (table && details) {
-      // Check version and codec_expression column availability
+      // Always start with basic query for maximum compatibility
       let columnsQuery = GET_TABLE_COLUMNS;
 
       try {
-        const version = await getClickHouseVersion(client);
+        // Check if codec_expression column exists before using extended query
         const hasCodecColumn = await checkColumnExists(client, 'system', 'columns', 'codec_expression');
 
-        // Use extended query with codec_expression if available (ClickHouse 20.1+)
-        if ((version.major >= 20 && version.minor >= 1) || hasCodecColumn) {
+        // Only use extended query if codec_expression definitely exists
+        if (hasCodecColumn === true) {
+          console.log('codec_expression available, using extended query');
           columnsQuery = GET_TABLE_COLUMNS_WITH_CODEC;
+        } else {
+          console.log('codec_expression not available, using basic query');
         }
       } catch (error) {
-        console.log('Version detection failed, using basic columns query:', error.message);
-        // Fall back to basic query without codec_expression
+        console.log('Column check failed, using basic query:', error.message);
+        // Always fall back to basic query without codec_expression
       }
 
       const [columnsResult, partsResult] = await Promise.all([
