@@ -10,21 +10,26 @@ export default function Home() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Check if already connected
-    const config = localStorage.getItem('clickhouse_config');
-    if (config) {
-      router.push('/dashboard');
-    } else {
-      setChecking(false);
+    // Check if already connected via secure cookies
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/clickhouse/check-auth');
+        if (response.ok) {
+          router.push('/dashboard');
+        } else {
+          setChecking(false);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setChecking(false);
+      }
     }
+    checkAuth();
   }, [router]);
 
-  const handleConnect = (config, clusterConfig) => {
-    // Store connection config in localStorage
-    localStorage.setItem('clickhouse_config', JSON.stringify(config));
-    localStorage.setItem('cluster_config', JSON.stringify(clusterConfig));
-
-    // Redirect to dashboard
+  const handleConnect = () => {
+    // Connection config is now stored securely in httpOnly cookies by the API
+    // No need to store in localStorage anymore
     router.push('/dashboard');
   };
 

@@ -1,7 +1,8 @@
+import { memo } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
-export default function StatCard({ title, value, icon: Icon, description, trend, gradient, className = '' }) {
+function StatCard({ title, value, icon: Icon, description, trend, gradient, className = '' }) {
   return (
     <Card gradient={gradient} className={`group hover-lift ${className}`}>
       <CardContent className="p-6">
@@ -41,3 +42,5 @@ export default function StatCard({ title, value, icon: Icon, description, trend,
     </Card>
   );
 }
+
+export default memo(StatCard);
