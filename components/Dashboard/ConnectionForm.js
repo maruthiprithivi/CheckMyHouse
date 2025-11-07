@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import toast from 'react-hot-toast';
 import { Database, Server, User, Lock, Sparkles } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -29,6 +30,8 @@ export default function ConnectionForm({ onConnect }) {
     setLoading(true);
     setError(null);
 
+    const connectingToast = toast.loading('Connecting to ClickHouse...');
+
     try {
       const response = await fetch('/api/clickhouse/connect', {
         method: 'POST',
@@ -44,9 +47,12 @@ export default function ConnectionForm({ onConnect }) {
         throw new Error(data.error || 'Failed to connect');
       }
 
-      onConnect(config, data.clusterConfig);
+      // Connection successful - credentials now stored securely in httpOnly cookies
+      toast.success('Connected successfully!', { id: connectingToast });
+      onConnect();
     } catch (err) {
       setError(err.message);
+      toast.error(err.message, { id: connectingToast });
     } finally {
       setLoading(false);
     }

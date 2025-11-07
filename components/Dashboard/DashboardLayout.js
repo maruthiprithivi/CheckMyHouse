@@ -1,37 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useRequireAuth } from '@/hooks/useAuth';
 
 export default function DashboardLayout({ children, title, description, icon: Icon }) {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useRequireAuth();
   const [clusterConfig, setClusterConfig] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const config = localStorage.getItem('clickhouse_config');
-    if (!config) {
+  const handleDisconnect = async () => {
+    try {
+      await fetch('/api/clickhouse/disconnect', { method: 'POST' });
       router.push('/');
-      return;
+    } catch (error) {
+      console.error('Disconnect error:', error);
+      router.push('/');
     }
-
-    const cluster = localStorage.getItem('cluster_config');
-    if (cluster) {
-      setClusterConfig(JSON.parse(cluster));
-    }
-
-    setLoading(false);
-  }, [router]);
-
-  const handleDisconnect = () => {
-    localStorage.removeItem('clickhouse_config');
-    localStorage.removeItem('cluster_config');
-    router.push('/');
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen">
         <Sidebar clusterInfo={clusterConfig} onDisconnect={handleDisconnect} />

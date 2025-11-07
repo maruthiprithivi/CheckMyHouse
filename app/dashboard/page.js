@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { Database, Table2, Search, Clock, Eye, GitBranch, Activity, Sparkles, ArrowRight } from 'lucide-react';
 import Sidebar from '@/components/Dashboard/Sidebar';
 import StatCard from '@/components/Dashboard/StatCard';
@@ -10,9 +11,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import { formatBytes, formatNumber } from '@/utils/formatters';
 import Button from '@/components/ui/Button';
+import { useRequireAuth } from '@/hooks/useAuth';
 
 export default function Dashboard() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
   const [loading, setLoading] = useState(true);
   const [clusterConfig, setClusterConfig] = useState(null);
   const [databases, setDatabases] = useState([]);
@@ -23,23 +26,10 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    const checkConnection = () => {
-      const config = localStorage.getItem('clickhouse_config');
-      if (!config) {
-        router.push('/');
-        return false;
-      }
-      return true;
-    };
-
-    if (checkConnection()) {
-      const cluster = localStorage.getItem('cluster_config');
-      if (cluster) {
-        setClusterConfig(JSON.parse(cluster));
-      }
+    if (isAuthenticated) {
       fetchDashboardData();
     }
-  }, [router]);
+  }, [isAuthenticated]);
 
   const fetchDashboardData = async () => {
     try {
@@ -68,13 +58,19 @@ export default function Dashboard() {
     }
   };
 
-  const handleDisconnect = () => {
-    localStorage.removeItem('clickhouse_config');
-    localStorage.removeItem('cluster_config');
-    router.push('/');
+  const handleDisconnect = async () => {
+    try {
+      await fetch('/api/clickhouse/disconnect', { method: 'POST' });
+      toast.success('Disconnected successfully');
+      router.push('/');
+    } catch (error) {
+      console.error('Disconnect error:', error);
+      toast.error('Failed to disconnect');
+      router.push('/');
+    }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex min-h-screen">
         <Sidebar clusterInfo={clusterConfig} onDisconnect={handleDisconnect} />

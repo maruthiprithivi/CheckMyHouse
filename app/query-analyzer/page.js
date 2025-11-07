@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useDebounce } from 'use-debounce';
 import Navigation from '@/components/Dashboard/Navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -36,6 +37,9 @@ export default function QueryAnalyzer() {
     offset: 0,
   });
 
+  // Debounce filters to prevent excessive API calls
+  const [debouncedFilters] = useDebounce(filters, 500);
+
   useEffect(() => {
     const config = localStorage.getItem('clickhouse_config');
     if (!config) {
@@ -49,8 +53,11 @@ export default function QueryAnalyzer() {
     }
 
     fetchCapabilities();
+  }, [router]);
+
+  useEffect(() => {
     fetchQueries();
-  }, [router, filters]);
+  }, [debouncedFilters]);
 
   const fetchCapabilities = async () => {
     try {
