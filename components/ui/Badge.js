@@ -5,16 +5,18 @@ export default function Badge({
   ...props
 }) {
   const variants = {
-    default: 'bg-primary text-primary-foreground',
-    secondary: 'bg-secondary text-secondary-foreground',
-    outline: 'border border-input bg-background text-foreground',
-    success: 'bg-green-100 text-green-800 border-green-200',
-    warning: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    danger: 'bg-red-100 text-red-800 border-red-200',
-    info: 'bg-blue-100 text-blue-800 border-blue-200',
+    default: 'bg-primary/10 text-primary border border-primary/20',
+    secondary: 'bg-secondary/10 text-secondary border border-secondary/20',
+    accent: 'bg-accent/10 text-accent border border-accent/20',
+    outline: 'border-2 border-border bg-background text-foreground',
+    success: 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800',
+    warning: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+    danger: 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
+    info: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
+    gradient: 'gradient-primary text-white border-0 shadow-sm',
   };
 
-  const classes = `inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors ${variants[variant]} ${className}`;
+  const classes = `inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-200 ${variants[variant]} ${className}`;
 
   return (
     <span className={classes} {...props}>
