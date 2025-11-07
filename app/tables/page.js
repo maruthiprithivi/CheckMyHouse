@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useRequireAuth } from '@/hooks/useAuth';
 import Navigation from '@/components/Dashboard/Navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -15,6 +16,7 @@ import { TABLE_ENGINES } from '@/utils/constants';
 function TableExplorerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
   const [clusterConfig, setClusterConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [databases, setDatabases] = useState([]);
@@ -23,25 +25,16 @@ function TableExplorerContent() {
   const [selectedTable, setSelectedTable] = useState(null);
 
   useEffect(() => {
-    const config = localStorage.getItem('clickhouse_config');
-    if (!config) {
-      router.push('/');
-      return;
+    if (isAuthenticated) {
+      fetchDatabases();
     }
-
-    const cluster = localStorage.getItem('cluster_config');
-    if (cluster) {
-      setClusterConfig(JSON.parse(cluster));
-    }
-
-    fetchDatabases();
-  }, [router]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (selectedDatabase) {
+    if (isAuthenticated && selectedDatabase) {
       fetchTables(selectedDatabase);
     }
-  }, [selectedDatabase]);
+  }, [selectedDatabase, isAuthenticated]);
 
   const fetchDatabases = async () => {
     try {
@@ -86,6 +79,14 @@ function TableExplorerContent() {
   const handleBack = () => {
     setSelectedTable(null);
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   if (selectedTable) {
     return (
