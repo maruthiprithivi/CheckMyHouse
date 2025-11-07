@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useRequireAuth } from '@/hooks/useAuth';
 import Navigation from '@/components/Dashboard/Navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -13,6 +14,7 @@ import { formatBytes, formatNumber } from '@/utils/formatters';
 
 export default function MaterializedViewsExplorer() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
   const [clusterConfig, setClusterConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [databases, setDatabases] = useState([]);
@@ -21,24 +23,17 @@ export default function MaterializedViewsExplorer() {
   const [selectedView, setSelectedView] = useState(null);
 
   useEffect(() => {
-    const config = localStorage.getItem('clickhouse_config');
-    if (!config) {
-      router.push('/');
-      return;
+    if (isAuthenticated) {
+      fetchDatabases();
+      fetchViews();
     }
-
-    const cluster = localStorage.getItem('cluster_config');
-    if (cluster) {
-      setClusterConfig(JSON.parse(cluster));
-    }
-
-    fetchDatabases();
-    fetchViews();
-  }, [router]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    fetchViews(selectedDatabase);
-  }, [selectedDatabase]);
+    if (isAuthenticated) {
+      fetchViews(selectedDatabase);
+    }
+  }, [selectedDatabase, isAuthenticated]);
 
   const fetchDatabases = async () => {
     try {
@@ -80,6 +75,14 @@ export default function MaterializedViewsExplorer() {
   const handleBack = () => {
     setSelectedView(null);
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   if (selectedView) {
     return (

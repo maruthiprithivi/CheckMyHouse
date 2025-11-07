@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useRequireAuth } from '@/hooks/useAuth';
 import Navigation from '@/components/Dashboard/Navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -13,29 +14,21 @@ const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function MonitoringDashboard() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
   const [clusterConfig, setClusterConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState(null);
   const [refreshInterval, setRefreshInterval] = useState(30); // seconds
 
   useEffect(() => {
-    const config = localStorage.getItem('clickhouse_config');
-    if (!config) {
-      router.push('/');
-      return;
+    if (isAuthenticated) {
+      fetchMetrics();
+
+      // Set up auto-refresh
+      const interval = setInterval(fetchMetrics, refreshInterval * 1000);
+      return () => clearInterval(interval);
     }
-
-    const cluster = localStorage.getItem('cluster_config');
-    if (cluster) {
-      setClusterConfig(JSON.parse(cluster));
-    }
-
-    fetchMetrics();
-
-    // Set up auto-refresh
-    const interval = setInterval(fetchMetrics, refreshInterval * 1000);
-    return () => clearInterval(interval);
-  }, [router, refreshInterval]);
+  }, [isAuthenticated, refreshInterval]);
 
   const fetchMetrics = async () => {
     try {
@@ -104,6 +97,14 @@ export default function MonitoringDashboard() {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   if (loading && !metrics) {
     return (

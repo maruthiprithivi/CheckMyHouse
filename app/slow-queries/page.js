@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useRequireAuth } from '@/hooks/useAuth';
 import Navigation from '@/components/Dashboard/Navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -20,6 +21,7 @@ SyntaxHighlighter.registerLanguage('sql', sql);
 
 export default function SlowQueries() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
   const [clusterConfig, setClusterConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [queries, setQueries] = useState([]);
@@ -31,19 +33,10 @@ export default function SlowQueries() {
   const [expandedQuery, setExpandedQuery] = useState(null);
 
   useEffect(() => {
-    const config = localStorage.getItem('clickhouse_config');
-    if (!config) {
-      router.push('/');
-      return;
+    if (isAuthenticated) {
+      fetchSlowQueries();
     }
-
-    const cluster = localStorage.getItem('cluster_config');
-    if (cluster) {
-      setClusterConfig(JSON.parse(cluster));
-    }
-
-    fetchSlowQueries();
-  }, [router, filters]);
+  }, [isAuthenticated, filters]);
 
   const fetchSlowQueries = async () => {
     try {
@@ -74,6 +67,14 @@ export default function SlowQueries() {
       [key]: value,
     }));
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
