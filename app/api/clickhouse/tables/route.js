@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getClientFromRequest } from '@/lib/clickhouse';
-import { GET_TABLES, GET_TABLE_COLUMNS, GET_TABLE_PARTS } from '@/lib/queries';
+import { getClientFromRequest, getClickHouseVersion, checkColumnExists } from '@/lib/clickhouse';
+import { GET_TABLES, GET_TABLE_COLUMNS, GET_TABLE_COLUMNS_WITH_CODEC, GET_TABLE_PARTS } from '@/lib/queries';
 
 export async function GET(request) {
   try {
@@ -16,13 +16,29 @@ export async function GET(request) {
       );
     }
 
-    const client = getClientFromRequest();
+    const client = await getClientFromRequest();
 
     // If specific table requested with details
     if (table && details) {
+      // Check version and codec_expression column availability
+      let columnsQuery = GET_TABLE_COLUMNS;
+
+      try {
+        const version = await getClickHouseVersion(client);
+        const hasCodecColumn = await checkColumnExists(client, 'system', 'columns', 'codec_expression');
+
+        // Use extended query with codec_expression if available (ClickHouse 20.1+)
+        if ((version.major >= 20 && version.minor >= 1) || hasCodecColumn) {
+          columnsQuery = GET_TABLE_COLUMNS_WITH_CODEC;
+        }
+      } catch (error) {
+        console.log('Version detection failed, using basic columns query:', error.message);
+        // Fall back to basic query without codec_expression
+      }
+
       const [columnsResult, partsResult] = await Promise.all([
         client.query({
-          query: GET_TABLE_COLUMNS.replace('{database}', database).replace('{table}', table),
+          query: columnsQuery.replace('{database}', database).replace('{table}', table),
           format: 'JSONEachRow',
         }),
         client.query({

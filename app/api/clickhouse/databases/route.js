@@ -4,7 +4,7 @@ import { GET_DATABASES } from '@/lib/queries';
 
 export async function GET(request) {
   try {
-    const client = getClientFromRequest();
+    const client = await getClientFromRequest();
 
     const result = await client.query({
       query: GET_DATABASES,
@@ -25,7 +25,7 @@ export async function GET(request) {
 
           return {
             ...db,
-            table_count: countData[0]?.table_count || 0,
+            table_count: Number(countData[0]?.table_count || 0),
           };
         } catch (error) {
           return {

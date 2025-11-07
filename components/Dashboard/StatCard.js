@@ -9,7 +9,7 @@ export default function StatCard({ title, value, icon, description, trend, class
           {icon && <span className="text-2xl">{icon}</span>}
         </div>
         <div className="flex items-baseline gap-2">
-          <h3 className="text-3xl font-bold">{value}</h3>
+          <h3 className="text-3xl font-bold break-words max-w-full overflow-hidden text-ellipsis">{value}</h3>
           {trend && (
             <span className={`text-sm ${trend.positive ? 'text-green-600' : 'text-red-600'}`}>
               {trend.value}

@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getClientFromRequest } from '@/lib/clickhouse';
-import { GET_MATERIALIZED_VIEWS, GET_TABLE_DEPENDENCIES } from '@/lib/queries';
+import { getClientFromRequest, checkTableExists } from '@/lib/clickhouse';
+import { GET_MATERIALIZED_VIEWS, GET_TABLE_DEPENDENCIES, GET_DEPENDENCIES_FROM_VIEWS } from '@/lib/queries';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const database = searchParams.get('database');
 
-    const client = getClientFromRequest();
+    const client = await getClientFromRequest();
 
     // Get all materialized views
     const mvResult = await client.query({
@@ -22,25 +22,66 @@ export async function GET(request) {
       views = views.filter(v => v.database === database);
     }
 
+    // Check if system.dependencies table exists (added in ClickHouse 20.3+)
+    const hasDependenciesTable = await checkTableExists(client, 'system', 'dependencies');
+
     // Get dependencies for each view
     const viewsWithDeps = await Promise.all(
       views.map(async (view) => {
         try {
-          const depsResult = await client.query({
-            query: GET_TABLE_DEPENDENCIES.replace('{database}', view.database),
-            format: 'JSONEachRow',
-          });
+          let sourceTables = [];
+          let targetTables = [];
 
-          const deps = await depsResult.json();
+          if (hasDependenciesTable) {
+            // Use system.dependencies for newer ClickHouse versions
+            try {
+              const depsResult = await client.query({
+                query: GET_TABLE_DEPENDENCIES.replace('{database}', view.database),
+                format: 'JSONEachRow',
+              });
 
-          // Find dependencies for this specific view
-          const sourceTables = deps
-            .filter(d => d.dependent_database === view.database && d.dependent_table === view.name)
-            .map(d => ({ database: d.database, table: d.table }));
+              const deps = await depsResult.json();
 
-          const targetTables = deps
-            .filter(d => d.database === view.database && d.table === view.name)
-            .map(d => ({ database: d.dependent_database, table: d.dependent_table }));
+              // Find dependencies for this specific view
+              sourceTables = deps
+                .filter(d => d.dependent_database === view.database && d.dependent_table === view.name)
+                .map(d => ({ database: d.database, table: d.table }));
+
+              targetTables = deps
+                .filter(d => d.database === view.database && d.table === view.name)
+                .map(d => ({ database: d.dependent_database, table: d.dependent_table }));
+            } catch (error) {
+              console.log('Failed to query system.dependencies for view, using fallback:', error.message);
+            }
+          }
+
+          // Fallback 1: Extract from view metadata (dependencies_database, dependencies_table)
+          if (sourceTables.length === 0 && view.dependencies_database && view.dependencies_table) {
+            // These can be arrays if multiple dependencies exist
+            const depDatabases = Array.isArray(view.dependencies_database)
+              ? view.dependencies_database
+              : [view.dependencies_database];
+            const depTables = Array.isArray(view.dependencies_table)
+              ? view.dependencies_table
+              : [view.dependencies_table];
+
+            sourceTables = depDatabases.map((db, i) => ({
+              database: db || view.database,
+              table: depTables[i] || '',
+            })).filter(d => d.table);
+          }
+
+          // Fallback 2: Parse FROM clause in the CREATE statement
+          if (sourceTables.length === 0 && view.create_table_query) {
+            const fromMatch = view.create_table_query.match(/FROM\s+(?:([`\w]+)\.)?([`\w]+)/i);
+            if (fromMatch) {
+              const db = fromMatch[1] ? fromMatch[1].replace(/[`]/g, '') : view.database;
+              const tbl = fromMatch[2].replace(/[`]/g, '');
+              if (tbl) {
+                sourceTables = [{ database: db, table: tbl }];
+              }
+            }
+          }
 
           return {
             ...view,
@@ -48,6 +89,7 @@ export async function GET(request) {
             targets: targetTables,
           };
         } catch (error) {
+          console.error(`Error processing view ${view.name}:`, error);
           return {
             ...view,
             sources: [],

@@ -18,7 +18,7 @@ export async function GET(request) {
       );
     }
 
-    const client = getClientFromRequest();
+    const client = await getClientFromRequest();
     const clusterConfig = await detectClusterConfig(client);
 
     const query = buildClusterQuery(

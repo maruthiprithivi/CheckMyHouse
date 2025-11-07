@@ -17,11 +17,15 @@ import QueryDrilldownView from '@/components/QueryAnalyzer/QueryDrilldownView';
 import ExportMenu from '@/components/ui/ExportMenu';
 import { SORT_OPTIONS, TIME_RANGES } from '@/utils/constants';
 import { formatQueryMetricsForExport } from '@/utils/exportUtils';
+import ErrorBoundary, { PermissionError, QuotaExceededError, FeatureUnavailable } from '@/components/ErrorBoundary';
+import { CapabilityBanner } from '@/components/ui/CapabilityIndicator';
 
 export default function QueryAnalyzer() {
   const router = useRouter();
   const [clusterConfig, setClusterConfig] = useState(null);
+  const [capabilities, setCapabilities] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [queries, setQueries] = useState([]);
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [filters, setFilters] = useState({
@@ -44,12 +48,27 @@ export default function QueryAnalyzer() {
       setClusterConfig(JSON.parse(cluster));
     }
 
+    fetchCapabilities();
     fetchQueries();
   }, [router, filters]);
+
+  const fetchCapabilities = async () => {
+    try {
+      const response = await fetch('/api/clickhouse/capabilities');
+      const data = await response.json();
+
+      if (response.ok) {
+        setCapabilities(data);
+      }
+    } catch (error) {
+      console.error('Error fetching capabilities:', error);
+    }
+  };
 
   const fetchQueries = async () => {
     try {
       setLoading(true);
+      setError(null);
 
       const params = new URLSearchParams({
         days: filters.days,
@@ -64,9 +83,24 @@ export default function QueryAnalyzer() {
 
       if (response.ok) {
         setQueries(data.queries);
+        setError(null);
+      } else {
+        // Handle different error types
+        setError({
+          type: data.type,
+          message: data.error,
+          requirements: data.requirements,
+          quotaInfo: data.quotaInfo,
+          retryAfter: data.retryAfter,
+          feature: data.feature,
+        });
       }
     } catch (error) {
       console.error('Error fetching queries:', error);
+      setError({
+        type: 'UNKNOWN',
+        message: error.message || 'Failed to fetch query data',
+      });
     } finally {
       setLoading(false);
     }
@@ -169,17 +203,68 @@ export default function QueryAnalyzer() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation clusterInfo={clusterConfig} />
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50">
+        <Navigation clusterInfo={clusterConfig} />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Query Analyzer</h1>
-          <p className="text-muted-foreground">
-            Comprehensive query performance analysis with percentile metrics
-          </p>
-        </div>
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Query Analyzer</h1>
+            <p className="text-muted-foreground">
+              Comprehensive query performance analysis with percentile metrics
+            </p>
+          </div>
+
+          {/* Capability Banner */}
+          {capabilities && <CapabilityBanner capabilities={capabilities} />}
+
+          {/* Error Handling */}
+          {error && error.type === 'PERMISSION_DENIED' && (
+            <PermissionError
+              feature={error.feature || 'Query Analyzer'}
+              table="system.query_log"
+              requirements={error.requirements}
+              onDismiss={() => setError(null)}
+            />
+          )}
+
+          {error && error.type === 'QUOTA_EXCEEDED' && (
+            <QuotaExceededError
+              quotaInfo={error.quotaInfo}
+              retryAfter={error.retryAfter}
+              onRetry={fetchQueries}
+            />
+          )}
+
+          {error && error.type === 'PERMISSION_DENIED' && (
+            <div className="mb-6">
+              <PermissionError
+                feature="Query Analyzer"
+                table="system.query_log"
+                requirements={error.requirements}
+                onDismiss={() => router.push('/dashboard')}
+              />
+            </div>
+          )}
+
+          {error && !['PERMISSION_DENIED', 'QUOTA_EXCEEDED'].includes(error.type) && (
+            <Card className="mb-6 border-red-200 bg-red-50">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 text-red-800 mb-2">
+                  <span className="text-2xl">⚠️</span>
+                  <h4 className="font-semibold">Error</h4>
+                </div>
+                <p className="text-red-700">{error.message}</p>
+                <Button onClick={fetchQueries} className="mt-4" size="sm">
+                  Retry
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {!error && (
+            <>
 
         {/* Filters */}
         <Card className="mb-6">
@@ -246,26 +331,29 @@ export default function QueryAnalyzer() {
           </CardContent>
         </Card>
 
-        {/* Query List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Aggregated Queries</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center h-96">
-                <LoadingSpinner size="lg" />
-              </div>
-            ) : (
-              <AggregateQueryList
-                queries={queries}
-                onQueryClick={handleQueryClick}
-                loading={loading}
-              />
-            )}
-          </CardContent>
-        </Card>
+          {/* Query List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Aggregated Queries</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center h-96">
+                  <LoadingSpinner size="lg" />
+                </div>
+              ) : (
+                <AggregateQueryList
+                  queries={queries}
+                  onQueryClick={handleQueryClick}
+                  loading={loading}
+                />
+              )}
+            </CardContent>
+          </Card>
+          </>
+          )}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

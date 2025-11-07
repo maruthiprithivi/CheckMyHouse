@@ -214,7 +214,7 @@ function SchemaTab({ columns }) {
                 <th className="text-left py-3 px-4 font-medium">Type</th>
                 <th className="text-left py-3 px-4 font-medium">Default</th>
                 <th className="text-left py-3 px-4 font-medium">Keys</th>
-                <th className="text-left py-3 px-4 font-medium">Codec</th>
+                <th className="text-left py-3 px-4 font-medium">Comment</th>
               </tr>
             </thead>
             <tbody>
@@ -250,7 +250,7 @@ function SchemaTab({ columns }) {
                     </div>
                   </td>
                   <td className="py-3 px-4 text-xs text-muted-foreground">
-                    {col.codec_expression || '-'}
+                    {col.comment || '-'}
                   </td>
                 </tr>
               ))}
