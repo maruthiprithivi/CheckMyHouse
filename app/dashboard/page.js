@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navigation from '@/components/Dashboard/Navigation';
+import { Database, Table2, Search, Clock, Eye, GitBranch, Activity, Sparkles, ArrowRight } from 'lucide-react';
+import Sidebar from '@/components/Dashboard/Sidebar';
 import StatCard from '@/components/Dashboard/StatCard';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import Badge from '@/components/ui/Badge';
 import { formatBytes, formatNumber } from '@/utils/formatters';
 import Button from '@/components/ui/Button';
 
@@ -74,9 +76,9 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <Navigation clusterInfo={clusterConfig} />
-        <div className="flex items-center justify-center h-96">
+      <div className="flex min-h-screen">
+        <Sidebar clusterInfo={clusterConfig} onDisconnect={handleDisconnect} />
+        <div className="flex-1 flex items-center justify-center">
           <LoadingSpinner size="lg" />
         </div>
       </div>
@@ -84,141 +86,196 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation clusterInfo={clusterConfig} />
+    <div className="flex min-h-screen">
+      <Sidebar clusterInfo={clusterConfig} onDisconnect={handleDisconnect} />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">Overview of your ClickHouse databases</p>
-          </div>
-          <Button variant="outline" onClick={handleDisconnect}>
-            Disconnect
-          </Button>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatCard
-            title="Total Databases"
-            value={formatNumber(stats.totalDatabases)}
-            icon="🗄️"
-            description="User-defined databases"
-          />
-          <StatCard
-            title="Total Tables"
-            value={formatNumber(stats.totalTables)}
-            icon="📊"
-            description="Across all databases"
-          />
-          <StatCard
-            title="Cluster Status"
-            value={clusterConfig?.isClustered ? 'Clustered' : 'Single Node'}
-            icon={clusterConfig?.isClustered ? '🌐' : '💻'}
-            description={clusterConfig?.isClustered ?
-              `${clusterConfig.nodes.length} nodes` :
-              'Standalone instance'}
-          />
-        </div>
-
-        {/* Databases List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Databases</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {databases.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No databases found
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4 font-medium">Name</th>
-                        <th className="text-left py-3 px-4 font-medium">Engine</th>
-                        <th className="text-left py-3 px-4 font-medium">Tables</th>
-                        <th className="text-right py-3 px-4 font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {databases.map((db) => (
-                        <tr key={db.name} className="border-b hover:bg-gray-50">
-                          <td className="py-3 px-4 font-medium">{db.name}</td>
-                          <td className="py-3 px-4 text-sm text-muted-foreground">
-                            {db.engine}
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {db.table_count} tables
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => router.push(`/tables?database=${db.name}`)}
-                            >
-                              Explore
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+      <main className="flex-1 overflow-auto">
+        {/* Hero Section */}
+        <div className="gradient-hero text-white py-12 px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm">
+                <Sparkles size={24} />
+              </div>
+              <h1 className="text-4xl font-bold">Dashboard</h1>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Links */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/query-analyzer')}>
-            <CardContent className="p-6">
-              <div className="text-3xl mb-2">🔍</div>
-              <h3 className="font-semibold mb-1">Query Analyzer</h3>
-              <p className="text-sm text-muted-foreground">
-                Analyze query performance with detailed metrics
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/tables')}>
-            <CardContent className="p-6">
-              <div className="text-3xl mb-2">📁</div>
-              <h3 className="font-semibold mb-1">Table Explorer</h3>
-              <p className="text-sm text-muted-foreground">
-                Browse tables, columns, and statistics
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/materialized-views')}>
-            <CardContent className="p-6">
-              <div className="text-3xl mb-2">👁️</div>
-              <h3 className="font-semibold mb-1">Materialized Views</h3>
-              <p className="text-sm text-muted-foreground">
-                Explore materialized views and dependencies
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/lineage')}>
-            <CardContent className="p-6">
-              <div className="text-3xl mb-2">🔗</div>
-              <h3 className="font-semibold mb-1">Data Lineage</h3>
-              <p className="text-sm text-muted-foreground">
-                Visualize data flow and dependencies
-              </p>
-            </CardContent>
-          </Card>
+            <p className="text-white/90 text-lg max-w-2xl">
+              Overview of your ClickHouse databases and quick access to powerful tools
+            </p>
+          </div>
         </div>
-      </div>
+
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 -mt-16">
+            <StatCard
+              title="Total Databases"
+              value={formatNumber(stats.totalDatabases)}
+              icon={Database}
+              description="User-defined databases"
+              gradient
+            />
+            <StatCard
+              title="Total Tables"
+              value={formatNumber(stats.totalTables)}
+              icon={Table2}
+              description="Across all databases"
+              gradient
+            />
+            <StatCard
+              title="Cluster Status"
+              value={clusterConfig?.isClustered ? 'Clustered' : 'Single Node'}
+              icon={Activity}
+              description={clusterConfig?.isClustered ?
+                `${clusterConfig.nodes.length} nodes` :
+                'Standalone instance'}
+              gradient
+            />
+          </div>
+
+          {/* Quick Links */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <Sparkles className="text-primary" size={24} />
+              Quick Access
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card hover onClick={() => router.push('/query-analyzer')}>
+                <CardContent className="p-6">
+                  <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4">
+                    <Search className="text-primary" size={28} />
+                  </div>
+                  <h3 className="font-bold text-lg mb-2 flex items-center justify-between group">
+                    Query Analyzer
+                    <ArrowRight className="text-primary opacity-0 group-hover:opacity-100 transition-opacity" size={18} />
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Analyze query performance with detailed metrics
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card hover onClick={() => router.push('/tables')}>
+                <CardContent className="p-6">
+                  <div className="p-3 rounded-xl bg-secondary/10 w-fit mb-4">
+                    <Table2 className="text-secondary" size={28} />
+                  </div>
+                  <h3 className="font-bold text-lg mb-2 flex items-center justify-between group">
+                    Table Explorer
+                    <ArrowRight className="text-secondary opacity-0 group-hover:opacity-100 transition-opacity" size={18} />
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Browse tables, columns, and statistics
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card hover onClick={() => router.push('/slow-queries')}>
+                <CardContent className="p-6">
+                  <div className="p-3 rounded-xl bg-warning/10 w-fit mb-4">
+                    <Clock className="text-warning" size={28} />
+                  </div>
+                  <h3 className="font-bold text-lg mb-2 flex items-center justify-between group">
+                    Slow Queries
+                    <ArrowRight className="text-warning opacity-0 group-hover:opacity-100 transition-opacity" size={18} />
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Identify and optimize slow-running queries
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card hover onClick={() => router.push('/lineage')}>
+                <CardContent className="p-6">
+                  <div className="p-3 rounded-xl bg-accent/10 w-fit mb-4">
+                    <GitBranch className="text-accent" size={28} />
+                  </div>
+                  <h3 className="font-bold text-lg mb-2 flex items-center justify-between group">
+                    Data Lineage
+                    <ArrowRight className="text-accent opacity-0 group-hover:opacity-100 transition-opacity" size={18} />
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Visualize data flow and dependencies
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Databases List */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <Database className="text-primary" size={24} />
+              Databases
+            </h2>
+            <Card>
+              <CardContent className="p-6">
+                {databases.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Database className="mx-auto text-muted-foreground mb-4" size={48} />
+                    <p className="text-muted-foreground">No databases found</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b-2 border-border">
+                          <th className="text-left py-4 px-4 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                            Name
+                          </th>
+                          <th className="text-left py-4 px-4 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                            Engine
+                          </th>
+                          <th className="text-left py-4 px-4 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                            Tables
+                          </th>
+                          <th className="text-right py-4 px-4 font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {databases.map((db, index) => (
+                          <tr
+                            key={db.name}
+                            className="border-b border-border hover:bg-muted/50 transition-colors animate-fade-in"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                          >
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-2">
+                                <Database className="text-primary" size={18} />
+                                <span className="font-semibold">{db.name}</span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <Badge variant="outline">{db.engine}</Badge>
+                            </td>
+                            <td className="py-4 px-4">
+                              <Badge variant="info">
+                                {db.table_count} {db.table_count === 1 ? 'table' : 'tables'}
+                              </Badge>
+                            </td>
+                            <td className="py-4 px-4 text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => router.push(`/tables?database=${db.name}`)}
+                              >
+                                Explore
+                                <ArrowRight size={16} />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

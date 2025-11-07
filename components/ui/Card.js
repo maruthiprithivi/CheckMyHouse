@@ -1,7 +1,10 @@
-export function Card({ children, className = '', ...props }) {
+export function Card({ children, className = '', hover = false, gradient = false, ...props }) {
+  const hoverClass = hover ? 'hover-lift cursor-pointer' : '';
+  const gradientClass = gradient ? 'stat-card' : '';
+
   return (
     <div
-      className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`}
+      className={`rounded-xl border bg-card text-card-foreground shadow-md hover:shadow-lg transition-all duration-300 ${hoverClass} ${gradientClass} ${className}`}
       {...props}
     >
       {children}
@@ -30,7 +33,7 @@ export function CardTitle({ children, className = '', ...props }) {
 
 export function CardDescription({ children, className = '', ...props }) {
   return (
-    <p className={`text-sm text-muted-foreground ${className}`} {...props}>
+    <p className={`text-sm text-muted-foreground leading-relaxed ${className}`} {...props}>
       {children}
     </p>
   );
