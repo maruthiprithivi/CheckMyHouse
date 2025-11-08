@@ -39,16 +39,25 @@ export default function Dashboard() {
       const response = await fetch('/api/clickhouse/databases');
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.databases) {
         setDatabases(data.databases);
 
         // Calculate stats
-        const totalTables = data.databases.reduce((sum, db) => sum + db.table_count, 0);
+        const totalTables = data.databases.reduce((sum, db) => sum + (db.table_count || 0), 0);
+        const totalDatabases = data.total !== undefined ? data.total : data.databases.length;
 
         setStats({
-          totalDatabases: data.total,
-          totalTables,
+          totalDatabases: totalDatabases || 0,
+          totalTables: totalTables || 0,
           totalSize: 0, // TODO: Calculate from tables
+        });
+      } else {
+        // Handle error response
+        console.error('Failed to fetch databases:', data.error);
+        setStats({
+          totalDatabases: 0,
+          totalTables: 0,
+          totalSize: 0,
         });
       }
     } catch (error) {

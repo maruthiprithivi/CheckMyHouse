@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getClientFromRequest, checkTableExists } from '@/lib/clickhouse';
-import { GET_TABLE_DEPENDENCIES, GET_DEPENDENCIES_FROM_VIEWS } from '@/lib/queries';
+import { GET_TABLE_DEPENDENCIES, GET_DEPENDENCIES_FROM_VIEWS, GET_MATERIALIZED_VIEWS } from '@/lib/queries';
 
 export async function GET(request) {
   try {
@@ -96,6 +96,32 @@ export async function GET(request) {
       }
     }
 
+    // Fetch materialized views to infer MV -> target edges from CREATE ... TO ...
+    let mvTargetEdges = [];
+    try {
+      const mvRes = await client.query({
+        query: GET_MATERIALIZED_VIEWS,
+        format: 'JSONEachRow',
+      });
+      const mvs = await mvRes.json();
+      const scopedMvs = database ? mvs.filter(v => v.database === database) : mvs;
+      for (const v of scopedMvs) {
+        const m = v.create_table_query?.match(/\bTO\s+(?:([`\w]+)\.)?([`\w]+)/i);
+        if (m) {
+          const db = m[1] ? m[1].replace(/[`]/g, '') : v.database;
+          const tbl = m[2].replace(/[`]/g, '');
+          if (tbl) {
+            mvTargetEdges.push({
+              source: `${v.database}.${v.name}`,
+              target: `${db}.${tbl}`,
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.log('Failed to fetch/parse materialized views for lineage:', e.message);
+    }
+
     // Build nodes and edges for the graph
     const nodes = tables.map(t => ({
       id: `${t.database}.${t.table}`,
@@ -107,10 +133,19 @@ export async function GET(request) {
       },
     }));
 
-    const edges = dependencies.map((dep, index) => ({
-      id: `edge-${index}`,
+    // Existing edges from dependencies table/fallback
+    let edgesRaw = dependencies.map((dep) => ({
       source: `${dep.database}.${dep.table}`,
       target: `${dep.dependent_database}.${dep.dependent_table}`,
+    }));
+
+    // Merge MV target edges and de-duplicate
+    const key = (e) => `${e.source}->${e.target}`;
+    const merged = new Map(edgesRaw.map(e => [key(e), e]));
+    for (const e of mvTargetEdges) merged.set(key(e), e);
+    const edges = Array.from(merged.values()).map((e, i) => ({
+      id: `edge-${i}`,
+      ...e,
       type: 'smoothstep',
       animated: true,
     }));

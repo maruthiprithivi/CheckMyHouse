@@ -18,6 +18,17 @@ const nodeTypes = {
 };
 
 export default function LineageGraph({ nodes: initialNodes, edges: initialEdges }) {
+  const defaultEdgeOptions = {
+    animated: true,
+    type: 'smoothstep',
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      width: 18,
+      height: 18,
+      color: '#10b981',
+    },
+    style: { stroke: '#10b981', strokeWidth: 2 },
+  };
   // Process nodes for positioning
   const processedNodes = initialNodes.map((node, index) => ({
     ...node,
@@ -67,6 +78,7 @@ export default function LineageGraph({ nodes: initialNodes, edges: initialEdges 
           onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
           fitView
+          defaultEdgeOptions={defaultEdgeOptions}
           attributionPosition="bottom-left"
         >
           <Background color="#94a3b8" gap={16} />

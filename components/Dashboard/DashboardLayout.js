@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import Sidebar from './Sidebar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useRequireAuth } from '@/hooks/useAuth';
@@ -14,9 +15,11 @@ export default function DashboardLayout({ children, title, description, icon: Ic
   const handleDisconnect = async () => {
     try {
       await fetch('/api/clickhouse/disconnect', { method: 'POST' });
+      toast.success('Disconnected successfully');
       router.push('/');
     } catch (error) {
       console.error('Disconnect error:', error);
+      toast.error('Failed to disconnect');
       router.push('/');
     }
   };

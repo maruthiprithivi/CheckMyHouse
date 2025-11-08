@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useAuth';
-import Navigation from '@/components/Dashboard/Navigation';
+import DashboardLayout from '@/components/Dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -11,11 +11,11 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Badge from '@/components/ui/Badge';
 import MaterializedViewDetails from '@/components/MaterializedViews/MaterializedViewDetails';
 import { formatBytes, formatNumber } from '@/utils/formatters';
+import { Eye } from 'lucide-react';
 
 export default function MaterializedViewsExplorer() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
-  const [clusterConfig, setClusterConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [databases, setDatabases] = useState([]);
   const [views, setViews] = useState([]);
@@ -77,41 +77,32 @@ export default function MaterializedViewsExplorer() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return null; // DashboardLayout handles loading
   }
 
   if (selectedView) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation clusterInfo={clusterConfig} />
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
-            <Button variant="outline" onClick={handleBack}>
-              ← Back to Materialized Views
-            </Button>
-          </div>
-          <MaterializedViewDetails view={selectedView} />
+      <DashboardLayout
+        title="Materialized View Details"
+        description={`Viewing details for ${selectedView.database}.${selectedView.name}`}
+        icon={Eye}
+      >
+        <div className="mb-6">
+          <Button variant="outline" onClick={handleBack}>
+            ← Back to Materialized Views
+          </Button>
         </div>
-      </div>
+        <MaterializedViewDetails view={selectedView} />
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation clusterInfo={clusterConfig} />
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Materialized Views</h1>
-          <p className="text-muted-foreground">
-            Explore materialized views, their dependencies, and transformations
-          </p>
-        </div>
+    <DashboardLayout
+      title="Materialized Views"
+      description="Explore materialized views, their dependencies, and transformations"
+      icon={Eye}
+    >
 
         {/* Filter */}
         <Card className="mb-6">
@@ -159,8 +150,7 @@ export default function MaterializedViewsExplorer() {
             )}
           </div>
         )}
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }
 
@@ -182,16 +172,6 @@ function MaterializedViewCard({ view, onClick }) {
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Engine:</span>
             <span className="font-medium">{view.engine}</span>
-          </div>
-
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Rows:</span>
-            <span className="font-medium">{formatNumber(view.total_rows)}</span>
-          </div>
-
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Size:</span>
-            <span className="font-medium">{formatBytes(view.total_bytes)}</span>
           </div>
         </div>
 

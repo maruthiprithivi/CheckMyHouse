@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useAuth';
-import Navigation from '@/components/Dashboard/Navigation';
+import DashboardLayout from '@/components/Dashboard/DashboardLayout';
+import { Clock } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -22,7 +23,6 @@ SyntaxHighlighter.registerLanguage('sql', sql);
 export default function SlowQueries() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
-  const [clusterConfig, setClusterConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [queries, setQueries] = useState([]);
   const [filters, setFilters] = useState({
@@ -69,25 +69,15 @@ export default function SlowQueries() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return null; // DashboardLayout handles loading
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation clusterInfo={clusterConfig} />
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Slow Queries Dashboard</h1>
-          <p className="text-muted-foreground">
-            Identify and analyze queries that exceed performance thresholds
-          </p>
-        </div>
+    <DashboardLayout
+      title="Slow Queries Dashboard"
+      description="Identify and analyze queries that exceed performance thresholds"
+      icon={Clock}
+    >
 
         {/* Filters */}
         <Card className="mb-6">
@@ -210,8 +200,7 @@ export default function SlowQueries() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

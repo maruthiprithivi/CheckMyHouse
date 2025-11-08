@@ -29,8 +29,7 @@ export default function MaterializedViewDetails({ view }) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatItem label="Total Rows" value={formatNumber(view.total_rows)} icon="📊" />
-            <StatItem label="Total Size" value={formatBytes(view.total_bytes)} icon="💾" />
+            <StatItem label="Engine" value={view.engine} icon="⚙️" />
             <StatItem label="Source Tables" value={view.sources?.length || 0} icon="📥" />
             <StatItem label="Downstream Tables" value={view.targets?.length || 0} icon="📤" />
           </div>
@@ -80,9 +79,6 @@ export default function MaterializedViewDetails({ view }) {
                 <div className="text-2xl mb-2">👁️</div>
                 <div className="font-mono text-sm font-medium text-purple-900">
                   {view.database}.{view.name}
-                </div>
-                <div className="text-xs text-purple-600 mt-1">
-                  {formatNumber(view.total_rows)} rows
                 </div>
               </div>
             </div>

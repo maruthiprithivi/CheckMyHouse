@@ -3,17 +3,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useAuth';
-import Navigation from '@/components/Dashboard/Navigation';
+import DashboardLayout from '@/components/Dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import LineageGraph from '@/components/LineageGraph/LineageGraph';
+import { GitBranch } from 'lucide-react';
 
 export default function DataLineage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
-  const [clusterConfig, setClusterConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [databases, setDatabases] = useState([]);
   const [selectedDatabase, setSelectedDatabase] = useState('');
@@ -66,25 +66,15 @@ export default function DataLineage() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return null; // DashboardLayout handles loading
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation clusterInfo={clusterConfig} />
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Data Lineage</h1>
-          <p className="text-muted-foreground">
-            Visualize data flow and dependencies across tables and views
-          </p>
-        </div>
+    <DashboardLayout
+      title="Data Lineage"
+      description="Visualize data flow and dependencies across tables and views"
+      icon={GitBranch}
+    >
 
         {/* Controls */}
         <Card className="mb-6">
@@ -192,7 +182,6 @@ export default function DataLineage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }

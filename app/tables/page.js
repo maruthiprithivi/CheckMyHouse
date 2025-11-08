@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useAuth';
-import Navigation from '@/components/Dashboard/Navigation';
+import DashboardLayout from '@/components/Dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -12,12 +12,12 @@ import Badge from '@/components/ui/Badge';
 import TableDetailsView from '@/components/TableExplorer/TableDetailsView';
 import { formatBytes, formatNumber } from '@/utils/formatters';
 import { TABLE_ENGINES } from '@/utils/constants';
+import { Table2 } from 'lucide-react';
 
 function TableExplorerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
-  const [clusterConfig, setClusterConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [databases, setDatabases] = useState([]);
   const [tables, setTables] = useState([]);
@@ -81,44 +81,35 @@ function TableExplorerContent() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return null; // DashboardLayout handles loading
   }
 
   if (selectedTable) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation clusterInfo={clusterConfig} />
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
-            <Button variant="outline" onClick={handleBack}>
-              ← Back to Tables
-            </Button>
-          </div>
-          <TableDetailsView
-            database={selectedDatabase}
-            table={selectedTable}
-          />
+      <DashboardLayout
+        title="Table Details"
+        description={`Viewing details for ${selectedDatabase}.${selectedTable.name}`}
+        icon={Table2}
+      >
+        <div className="mb-6">
+          <Button variant="outline" onClick={handleBack}>
+            ← Back to Tables
+          </Button>
         </div>
-      </div>
+        <TableDetailsView
+          database={selectedDatabase}
+          table={selectedTable}
+        />
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation clusterInfo={clusterConfig} />
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Table Explorer</h1>
-          <p className="text-muted-foreground">
-            Browse tables, columns, and detailed statistics
-          </p>
-        </div>
+    <DashboardLayout
+      title="Table Explorer"
+      description="Browse tables, columns, and detailed statistics"
+      icon={Table2}
+    >
 
         {/* Database Selector */}
         <Card className="mb-6">
@@ -172,8 +163,7 @@ function TableExplorerContent() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

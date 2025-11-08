@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDebounce } from 'use-debounce';
 import { useRequireAuth } from '@/hooks/useAuth';
-import Navigation from '@/components/Dashboard/Navigation';
+import DashboardLayout from '@/components/Dashboard/DashboardLayout';
+import { Search } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -25,7 +26,6 @@ import { CapabilityBanner } from '@/components/ui/CapabilityIndicator';
 export default function QueryAnalyzer() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
-  const [clusterConfig, setClusterConfig] = useState(null);
   const [capabilities, setCapabilities] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -125,18 +125,16 @@ export default function QueryAnalyzer() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return null; // DashboardLayout handles loading
   }
 
   if (selectedQuery) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation clusterInfo={clusterConfig} />
-        <div className="container mx-auto px-4 py-8">
+      <DashboardLayout
+        title="Query Pattern Analysis"
+        description={`Analyzing query pattern: ${selectedQuery.normalized_query_hash.toString()}`}
+        icon={Search}
+      >
           <div className="mb-6">
             <Button variant="outline" onClick={handleBack}>
               ← Back to Query List
@@ -207,24 +205,17 @@ export default function QueryAnalyzer() {
               </CardContent>
             </Card>
           </div>
-        </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50">
-        <Navigation clusterInfo={clusterConfig} />
-
-        <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Query Analyzer</h1>
-            <p className="text-muted-foreground">
-              Comprehensive query performance analysis with percentile metrics
-            </p>
-          </div>
+      <DashboardLayout
+        title="Query Analyzer"
+        description="Comprehensive query performance analysis with percentile metrics"
+        icon={Search}
+      >
 
           {/* Capability Banner */}
           {capabilities && <CapabilityBanner capabilities={capabilities} />}
@@ -362,8 +353,7 @@ export default function QueryAnalyzer() {
           </Card>
           </>
           )}
-        </div>
-      </div>
+      </DashboardLayout>
     </ErrorBoundary>
   );
 }

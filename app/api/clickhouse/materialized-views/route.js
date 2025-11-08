@@ -83,6 +83,18 @@ export async function GET(request) {
             }
           }
 
+          // Fallback 3: Parse TO <db>.<table> in CREATE MATERIALIZED VIEW to detect targets
+          if (targetTables.length === 0 && view.create_table_query) {
+            const toMatch = view.create_table_query.match(/\bTO\s+(?:([`\w]+)\.)?([`\w]+)/i);
+            if (toMatch) {
+              const tgtDb = toMatch[1] ? toMatch[1].replace(/[`]/g, '') : view.database;
+              const tgtTbl = toMatch[2].replace(/[`]/g, '');
+              if (tgtTbl) {
+                targetTables = [{ database: tgtDb, table: tgtTbl }];
+              }
+            }
+          }
+
           return {
             ...view,
             sources: sourceTables,

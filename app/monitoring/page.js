@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useAuth';
-import Navigation from '@/components/Dashboard/Navigation';
+import DashboardLayout from '@/components/Dashboard/DashboardLayout';
+import { Activity } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Badge from '@/components/ui/Badge';
@@ -15,7 +16,6 @@ const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 export default function MonitoringDashboard() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
-  const [clusterConfig, setClusterConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState(null);
   const [refreshInterval, setRefreshInterval] = useState(30); // seconds
@@ -99,46 +99,37 @@ export default function MonitoringDashboard() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return null; // DashboardLayout handles loading
   }
 
   if (loading && !metrics) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation clusterInfo={clusterConfig} />
+      <DashboardLayout
+        title="Real-Time Monitoring"
+        description="Live metrics and performance monitoring"
+        icon={Activity}
+      >
         <div className="flex items-center justify-center h-96">
           <LoadingSpinner size="lg" />
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation clusterInfo={clusterConfig} />
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Real-Time Monitoring</h1>
-            <p className="text-muted-foreground">
-              Live metrics and performance monitoring
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-muted-foreground">
-              Last updated: {metrics?.lastUpdated}
-            </div>
-            <Badge variant={loading ? 'warning' : 'success'}>
-              {loading ? 'Updating...' : '● Live'}
-            </Badge>
-          </div>
+    <DashboardLayout
+      title="Real-Time Monitoring"
+      description="Live metrics and performance monitoring"
+      icon={Activity}
+    >
+      <div className="mb-6 flex items-center justify-end gap-4">
+        <div className="text-sm text-muted-foreground">
+          Last updated: {metrics?.lastUpdated}
         </div>
+        <Badge variant={loading ? 'warning' : 'success'}>
+          {loading ? 'Updating...' : '● Live'}
+        </Badge>
+      </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -277,8 +268,7 @@ export default function MonitoringDashboard() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }
 
