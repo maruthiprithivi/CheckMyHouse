@@ -105,14 +105,11 @@ export function truncateString(str, maxLength = 50) {
 export function formatSQL(sql) {
   if (!sql) return '';
 
+  // Simple formatter that adds newlines before keywords
+  // This is basic but sufficient for display purposes
+  // A full SQL formatter would be too heavy
   return sql
-    .replace(/\s+/g, ' ')
-    .replace(/SELECT/gi, '\nSELECT')
-    .replace(/FROM/gi, '\nFROM')
-    .replace(/WHERE/gi, '\nWHERE')
-    .replace(/GROUP BY/gi, '\nGROUP BY')
-    .replace(/ORDER BY/gi, '\nORDER BY')
-    .replace(/LIMIT/gi, '\nLIMIT')
-    .replace(/JOIN/gi, '\nJOIN')
+    .replace(/\s+/g, ' ') // Collapse multiple spaces
+    .replace(/\s(SELECT|FROM|WHERE|GROUP BY|ORDER BY|LIMIT|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|HAVING|UNION|WITH)/gi, '\n$1') // Add newline before keywords
     .trim();
 }
