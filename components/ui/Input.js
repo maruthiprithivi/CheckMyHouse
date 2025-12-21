@@ -8,7 +8,9 @@ export default function Input({
   error = false,
   ...props
 }) {
-  const errorClass = error ? 'border-destructive focus:ring-destructive' : '';
+  const errorClass = error
+    ? 'border-destructive focus:shadow-[0_0_10px_hsl(var(--destructive)/0.5)]'
+    : 'focus:border-primary focus:shadow-glow';
 
   return (
     <input
@@ -17,7 +19,7 @@ export default function Input({
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      className={`flex h-11 w-full rounded-lg border-2 border-input bg-background px-4 py-2 text-sm ring-offset-background transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:border-primary hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-50 ${errorClass} ${className}`}
+      className={`flex h-11 w-full rounded-sm border border-white/20 bg-black/50 backdrop-blur-sm px-4 py-2 text-sm font-mono placeholder:text-muted-foreground/50 transition-all duration-300 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 text-white hover:border-white/40 ${errorClass} ${className}`}
       {...props}
     />
   );

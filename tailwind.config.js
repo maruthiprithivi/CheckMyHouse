@@ -70,11 +70,15 @@ module.exports = {
         lg: 'var(--shadow-lg)',
         xl: 'var(--shadow-xl)',
         colored: 'var(--shadow-colored)',
+        glow: 'var(--glow-primary)',
+        'glow-secondary': 'var(--glow-secondary)',
+        'glow-accent': 'var(--glow-accent)',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',
         'slide-in': 'slideInFromLeft 0.5s ease-out',
         'pulse-slow': 'pulse-slow 3s ease-in-out infinite',
+        'scanline': 'scanline 4s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -89,6 +93,13 @@ module.exports = {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.5' },
         },
+        scanline: {
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(100%)' },
+        },
+      },
+      backgroundImage: {
+        'grid-pattern': "linear-gradient(rgba(0,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.05)_1px,transparent_1px)",
       },
     },
   },

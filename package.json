@@ -30,7 +30,7 @@
     "recharts": "^2.15.0",
     "three": "^0.181.0",
     "use-debounce": "^10.0.4",
-    "zod": "^4.1.12"
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
