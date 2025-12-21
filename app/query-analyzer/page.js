@@ -159,23 +159,23 @@ export default function QueryAnalyzer() {
               </div>
 
               <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-700">
+                <div className="text-center p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-500">
                     {selectedQuery.execution_count}
                   </div>
-                  <div className="text-sm text-blue-600">Executions</div>
+                  <div className="text-sm text-blue-400">Executions</div>
                 </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-700">
+                <div className="text-center p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                  <div className="text-2xl font-bold text-green-500">
                     {((1 - selectedQuery.error_rate) * 100).toFixed(1)}%
                   </div>
-                  <div className="text-sm text-green-600">Success Rate</div>
+                  <div className="text-sm text-green-400">Success Rate</div>
                 </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-700">
+                <div className="text-center p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-500">
                     {selectedQuery.query_kind || 'N/A'}
                   </div>
-                  <div className="text-sm text-purple-600">Query Type</div>
+                  <div className="text-sm text-purple-400">Query Type</div>
                 </div>
               </div>
 
@@ -250,14 +250,14 @@ export default function QueryAnalyzer() {
           )}
 
           {error && !['PERMISSION_DENIED', 'QUOTA_EXCEEDED'].includes(error.type) && (
-            <Card className="mb-6 border-red-200 bg-red-50">
+            <Card className="mb-6 border-destructive/50 bg-destructive/10">
               <CardContent className="p-6">
-                <div className="flex items-center gap-2 text-red-800 mb-2">
+                <div className="flex items-center gap-2 text-destructive-foreground mb-2">
                   <span className="text-2xl">⚠️</span>
                   <h4 className="font-semibold">Error</h4>
                 </div>
-                <p className="text-red-700">{error.message}</p>
-                <Button onClick={fetchQueries} className="mt-4" size="sm">
+                <p className="text-destructive-foreground/90">{error.message}</p>
+                <Button onClick={fetchQueries} className="mt-4" size="sm" variant="destructive">
                   Retry
                 </Button>
               </CardContent>
