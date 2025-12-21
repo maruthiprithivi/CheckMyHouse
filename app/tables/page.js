@@ -21,8 +21,10 @@ function TableExplorerContent() {
   const [loading, setLoading] = useState(true);
   const [databases, setDatabases] = useState([]);
   const [tables, setTables] = useState([]);
-  const [selectedDatabase, setSelectedDatabase] = useState(searchParams.get('database') || '');
-  const [selectedTable, setSelectedTable] = useState(null);
+
+  // Get state from URL
+  const selectedDatabase = searchParams.get('database') || '';
+  const selectedTableName = searchParams.get('table');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -44,9 +46,9 @@ function TableExplorerContent() {
       if (response.ok) {
         setDatabases(data.databases);
 
-        // Auto-select first database if none selected
+        // Auto-select first database if none selected and not in URL
         if (!selectedDatabase && data.databases.length > 0) {
-          setSelectedDatabase(data.databases[0].name);
+          handleDatabaseChange(data.databases[0].name);
         }
       }
     } catch (error) {
@@ -72,23 +74,40 @@ function TableExplorerContent() {
     }
   };
 
+  const handleDatabaseChange = (dbName) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('database', dbName);
+    params.delete('table'); // Clear selected table when changing DB
+    router.push(`/tables?${params.toString()}`);
+  };
+
   const handleTableClick = (table) => {
-    setSelectedTable(table);
+    const params = new URLSearchParams(searchParams);
+    if (selectedDatabase) params.set('database', selectedDatabase);
+    params.set('table', table.name);
+    router.push(`/tables?${params.toString()}`);
   };
 
   const handleBack = () => {
-    setSelectedTable(null);
+    const params = new URLSearchParams(searchParams);
+    params.delete('table');
+    router.push(`/tables?${params.toString()}`);
   };
 
   if (authLoading) {
     return null; // DashboardLayout handles loading
   }
 
-  if (selectedTable) {
+  // Find the selected table object from the tables list
+  const selectedTable = selectedTableName
+    ? tables.find(t => t.name === selectedTableName) || { name: selectedTableName, engine: 'Unknown' }
+    : null;
+
+  if (selectedTableName) {
     return (
       <DashboardLayout
         title="Table Details"
-        description={`Viewing details for ${selectedDatabase}.${selectedTable.name}`}
+        description={`Viewing details for ${selectedDatabase}.${selectedTableName}`}
         icon={Table2}
       >
         <div className="mb-6">
@@ -98,7 +117,7 @@ function TableExplorerContent() {
         </div>
         <TableDetailsView
           database={selectedDatabase}
-          table={selectedTable}
+          table={{ name: selectedTableName, ...selectedTable }}
         />
       </DashboardLayout>
     );
@@ -118,7 +137,7 @@ function TableExplorerContent() {
               <label className="font-medium">Select Database:</label>
               <Select
                 value={selectedDatabase}
-                onChange={setSelectedDatabase}
+                onChange={handleDatabaseChange}
                 options={databases.map(db => ({
                   value: db.name,
                   label: `${db.name} (${db.table_count} tables)`,

@@ -8,6 +8,8 @@ import { formatBytes, formatNumber, formatDate } from '@/utils/formatters';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import sql from 'react-syntax-highlighter/dist/esm/languages/hljs/sql';
 import { github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { generateTableHealthRecommendations } from '@/utils/recommendations';
+import RecommendationsPanel from '@/components/Recommendations/RecommendationsPanel';
 
 SyntaxHighlighter.registerLanguage('sql', sql);
 
@@ -219,7 +221,7 @@ function SchemaTab({ columns }) {
             </thead>
             <tbody>
               {columns.map((col, index) => (
-                <tr key={index} className="border-b hover:bg-gray-50">
+                <tr key={index} className="border-b hover:bg-muted/50 transition-colors">
                   <td className="py-3 px-4 font-mono font-medium">{col.name}</td>
                   <td className="py-3 px-4">
                     <Badge variant="outline">{col.type}</Badge>
@@ -334,7 +336,7 @@ function PartsTab({ parts }) {
             </thead>
             <tbody>
               {parts.slice(0, 50).map((part, index) => (
-                <tr key={index} className="border-b hover:bg-gray-50">
+                <tr key={index} className="border-b hover:bg-muted/50 transition-colors">
                   <td className="py-2 px-4 font-mono">{part.partition}</td>
                   <td className="py-2 px-4 font-mono text-xs">{part.name}</td>
                   <td className="py-2 px-4 text-right">{formatNumber(part.rows)}</td>
@@ -385,10 +387,6 @@ function DDLTab({ ddl }) {
 }
 
 function RecommendationsTab({ stats, table }) {
-  // Import dynamically to avoid circular dependencies
-  const { generateTableHealthRecommendations } = require('@/utils/recommendations');
-  const RecommendationsPanel = require('@/components/Recommendations/RecommendationsPanel').default;
-
   const recommendations = generateTableHealthRecommendations(stats);
 
   return (
