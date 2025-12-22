@@ -1,0 +1,67 @@
+
+> checkmyhouse@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+- Experiments (use with caution):
+  · serverActions
+
+✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+✓ Ready in 714ms
+○ Compiling /dashboard ...
+ GET /dashboard 200 in 5.8s (compile: 5.4s, render: 376ms)
+ GET /api/clickhouse/check-auth 401 in 1424ms (compile: 1373ms, render: 51ms)
+ GET / 200 in 1998ms (compile: 1971ms, render: 27ms)
+ GET /api/clickhouse/check-auth 401 in 14ms (compile: 3ms, render: 11ms)
+ GET /api/clickhouse/check-auth 401 in 12ms (compile: 4ms, render: 8ms)
+ GET /slow-queries 200 in 976ms (compile: 873ms, render: 103ms)
+ GET /api/clickhouse/check-auth 401 in 9ms (compile: 3ms, render: 6ms)
+ GET / 200 in 26ms (compile: 3ms, render: 23ms)
+ GET /api/clickhouse/check-auth 401 in 12ms (compile: 4ms, render: 7ms)
+ GET /api/clickhouse/check-auth 401 in 12ms (compile: 5ms, render: 7ms)
+ GET / 200 in 67ms (compile: 3ms, render: 64ms)
+ GET / 200 in 33ms (compile: 4ms, render: 29ms)
+ GET /api/clickhouse/check-auth 401 in 9ms (compile: 3ms, render: 6ms)
+ GET /api/clickhouse/check-auth 401 in 8ms (compile: 2ms, render: 6ms)
+ GET /api/clickhouse/check-auth 401 in 13ms (compile: 4ms, render: 10ms)
+ GET / 200 in 79ms (compile: 5ms, render: 74ms)
+ GET /api/clickhouse/check-auth 401 in 11ms (compile: 3ms, render: 8ms)
+ GET /slow-queries 200 in 125ms (compile: 4ms, render: 121ms)
+ GET /api/clickhouse/check-auth 401 in 10ms (compile: 3ms, render: 7ms)
+ GET / 200 in 30ms (compile: 3ms, render: 27ms)
+ GET /api/clickhouse/check-auth 401 in 10ms (compile: 3ms, render: 7ms)
+ GET /api/clickhouse/check-auth 401 in 13ms (compile: 5ms, render: 8ms)
+ GET / 200 in 26ms (compile: 4ms, render: 22ms)
+ GET / 200 in 24ms (compile: 7ms, render: 18ms)
+ GET /api/clickhouse/check-auth 401 in 10ms (compile: 4ms, render: 5ms)
+ GET /api/clickhouse/check-auth 401 in 10ms (compile: 2ms, render: 7ms)
+Error fetching dashboard metrics: Error: ClickHouse client not initialized. Please connect first.
+    at getClientFromRequest (lib/clickhouse.js:51:9)
+    at async GET (app/api/clickhouse/dashboard-metrics/route.js:11:20)
+  49 |   }
+  50 |
+> 51 |   throw new Error('ClickHouse client not initialized. Please connect first.');
+     |         ^
+  52 | }
+  53 |
+  54 | /**
+ GET /api/clickhouse/dashboard-metrics 500 in 725ms (compile: 399ms, render: 326ms)
+ GET / 200 in 174ms (compile: 26ms, render: 149ms)
+ GET /api/clickhouse/check-auth 401 in 21ms (compile: 5ms, render: 16ms)
+ GET /slow-queries 200 in 1463ms (compile: 990ms, render: 472ms)
+ GET /api/clickhouse/check-auth 401 in 36ms (compile: 25ms, render: 11ms)
+ GET /api/clickhouse/check-auth 401 in 20ms (compile: 7ms, render: 14ms)
+ GET /api/clickhouse/check-auth 401 in 34ms (compile: 16ms, render: 18ms)
+ GET / 200 in 192ms (compile: 11ms, render: 181ms)
+ GET / 200 in 114ms (compile: 39ms, render: 75ms)
+ GET / 200 in 44ms (compile: 5ms, render: 38ms)
+ GET /api/clickhouse/check-auth 401 in 16ms (compile: 7ms, render: 10ms)
+ GET /api/clickhouse/check-auth 401 in 17ms (compile: 7ms, render: 9ms)
+ GET /api/clickhouse/dashboard-metrics 401 in 350ms (compile: 330ms, render: 20ms)
