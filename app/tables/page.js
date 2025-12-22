@@ -91,6 +91,10 @@ function TableExplorerContent() {
   const handleBack = () => {
     const params = new URLSearchParams(searchParams);
     params.delete('table');
+    // Ensure we keep the database parameter
+    if (selectedDatabase) {
+      params.set('database', selectedDatabase);
+    }
     router.push(`/tables?${params.toString()}`);
   };
 

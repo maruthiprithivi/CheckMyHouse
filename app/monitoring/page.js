@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Badge from '@/components/ui/Badge';
 import { formatNumber, formatBytes, formatDuration } from '@/utils/formatters';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { PermissionError } from '@/components/ErrorBoundary';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
@@ -19,6 +20,7 @@ export default function MonitoringDashboard() {
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState(null);
   const [refreshInterval, setRefreshInterval] = useState(30); // seconds
+  const [permissionError, setPermissionError] = useState(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -33,6 +35,7 @@ export default function MonitoringDashboard() {
   const fetchMetrics = async () => {
     try {
       setLoading(true);
+      setPermissionError(null);
 
       // Fetch various metrics in parallel
       const [queriesRes, tablesRes] = await Promise.all([
@@ -42,6 +45,28 @@ export default function MonitoringDashboard() {
 
       const queriesData = await queriesRes.json();
       const tablesData = await tablesRes.json();
+
+      if (!queriesRes.ok && queriesData.type === 'PERMISSION_DENIED') {
+        setPermissionError({
+          feature: 'Monitoring Dashboard',
+          table: 'system.query_log',
+          requirements: queriesData.requirements
+        });
+        // Still try to show tables data if available
+        setMetrics({
+          totalQueries: 0,
+          avgDuration: 0,
+          errorQueries: 0,
+          errorRate: 0,
+          totalTables: tablesData.databases?.reduce((sum, db) => sum + db.table_count, 0) || 0,
+          totalDatabases: tablesData.total || 0,
+          queryTypeData: [],
+          slowestQueries: [],
+          memoryDistribution: [],
+          lastUpdated: new Date().toLocaleTimeString(),
+        });
+        return;
+      }
 
       // Calculate metrics
       const recentQueries = queriesData.queries || [];
@@ -122,6 +147,17 @@ export default function MonitoringDashboard() {
       description="Live metrics and performance monitoring"
       icon={Activity}
     >
+      {permissionError && (
+        <div className="mb-6">
+          <PermissionError
+            feature={permissionError.feature}
+            table={permissionError.table}
+            requirements={permissionError.requirements}
+            onDismiss={() => setPermissionError(null)}
+          />
+        </div>
+      )}
+
       <div className="mb-6 flex items-center justify-end gap-4">
         <div className="text-sm text-muted-foreground">
           Last updated: {metrics?.lastUpdated}

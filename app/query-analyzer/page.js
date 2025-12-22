@@ -222,12 +222,14 @@ export default function QueryAnalyzer() {
 
           {/* Error Handling */}
           {error && error.type === 'PERMISSION_DENIED' && (
-            <PermissionError
-              feature={error.feature || 'Query Analyzer'}
-              table="system.query_log"
-              requirements={error.requirements}
-              onDismiss={() => setError(null)}
-            />
+            <div className="mb-6">
+              <PermissionError
+                feature={error.feature || 'Query Analyzer'}
+                table="system.query_log"
+                requirements={error.requirements}
+                onDismiss={() => setError(null)}
+              />
+            </div>
           )}
 
           {error && error.type === 'QUOTA_EXCEEDED' && (
@@ -236,17 +238,6 @@ export default function QueryAnalyzer() {
               retryAfter={error.retryAfter}
               onRetry={fetchQueries}
             />
-          )}
-
-          {error && error.type === 'PERMISSION_DENIED' && (
-            <div className="mb-6">
-              <PermissionError
-                feature="Query Analyzer"
-                table="system.query_log"
-                requirements={error.requirements}
-                onDismiss={() => router.push('/dashboard')}
-              />
-            </div>
           )}
 
           {error && !['PERMISSION_DENIED', 'QUOTA_EXCEEDED'].includes(error.type) && (
