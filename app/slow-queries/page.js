@@ -209,32 +209,34 @@ function SlowQueryCard({ query, expanded, onToggle }) {
   const memoryIndicator = getMemoryIndicator(query.memory_usage);
 
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden bg-card transition-colors">
       <div
-        className="p-4 hover:bg-gray-50 cursor-pointer"
+        className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
         onClick={onToggle}
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <code className="text-xs text-muted-foreground">
+            <code className="text-xs text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
               {query.query_id.substring(0, 8)}
             </code>
             <span className="text-sm text-muted-foreground">
               {formatDate(query.event_time)}
             </span>
             {query.exception && (
-              <Badge variant="danger">Error</Badge>
+              <Badge variant="destructive">Error</Badge>
             )}
             <Badge variant="outline">{query.user}</Badge>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
               <span>{durationIndicator.emoji}</span>
-              <span className="font-bold text-lg">
+              <span className={`font-bold text-lg ${
+                query.query_duration_ms > 5000 ? 'text-destructive' : 'text-foreground'
+              }`}>
                 {formatDuration(query.query_duration_ms)}
               </span>
             </div>
-            <button className="text-muted-foreground">
+            <button className="text-muted-foreground hover:text-primary transition-colors">
               {expanded ? '▼' : '▶'}
             </button>
           </div>
@@ -247,33 +249,37 @@ function SlowQueryCard({ query, expanded, onToggle }) {
           <MetricCell label="Pattern" value={query.query_pattern?.substring(0, 12) + '...'} />
           <MetricCell
             label="Tables"
-            value={query.tables?.length > 0 ? query.tables[0].join('.') : 'N/A'}
+            value={query.tables?.length > 0 ? query.tables.join(', ') : 'N/A'}
           />
         </div>
       </div>
 
       {expanded && (
-        <div className="border-t bg-gray-50 p-4">
+        <div className="border-t border-border bg-muted/20 p-4 animate-accordion-down">
           <div className="mb-4">
-            <h4 className="font-medium mb-2">Full Query:</h4>
-            <SyntaxHighlighter
-              language="sql"
-              style={github}
-              customStyle={{
-                padding: '1rem',
-                borderRadius: '0.5rem',
-                fontSize: '0.75rem',
-                maxHeight: '300px',
-              }}
-            >
-              {query.query}
-            </SyntaxHighlighter>
+            <h4 className="font-medium mb-2 text-foreground">Full Query:</h4>
+            <div className="rounded-lg overflow-hidden border border-border">
+              <SyntaxHighlighter
+                language="sql"
+                style={github}
+                customStyle={{
+                  padding: '1rem',
+                  borderRadius: '0',
+                  fontSize: '0.85rem',
+                  maxHeight: '300px',
+                  background: 'var(--muted)',
+                  color: 'var(--foreground)',
+                }}
+              >
+                {query.query}
+              </SyntaxHighlighter>
+            </div>
           </div>
 
           {query.exception && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded mb-4">
-              <h4 className="font-medium text-red-900 mb-1">Error:</h4>
-              <pre className="text-xs text-red-800 whitespace-pre-wrap">
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md mb-4">
+              <h4 className="font-medium text-destructive mb-1">Error:</h4>
+              <pre className="text-xs text-destructive-foreground whitespace-pre-wrap font-mono">
                 {query.exception}
               </pre>
             </div>
@@ -281,11 +287,11 @@ function SlowQueryCard({ query, expanded, onToggle }) {
 
           {query.tables && query.tables.length > 0 && (
             <div>
-              <h4 className="font-medium mb-2">Tables Used:</h4>
+              <h4 className="font-medium mb-2 text-foreground">Tables Used:</h4>
               <div className="flex flex-wrap gap-2">
                 {query.tables.map((table, i) => (
-                  <Badge key={i} variant="outline">
-                    {table.join('.')}
+                  <Badge key={i} variant="secondary">
+                    {table}
                   </Badge>
                 ))}
               </div>

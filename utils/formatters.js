@@ -27,6 +27,18 @@ export function formatNumber(num, decimals = 0) {
 }
 
 /**
+ * Format currency with compact notation
+ */
+export function formatCurrency(num) {
+  if (num === null || num === undefined) return 'N/A';
+
+  return new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(num);
+}
+
+/**
  * Format milliseconds to human-readable format
  */
 export function formatDuration(ms) {

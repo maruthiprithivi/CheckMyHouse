@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Database, Table2, Search, Clock, Eye, GitBranch, Activity, Sparkles, ArrowRight } from 'lucide-react';
+import { Database, Table2, Search, Clock, Eye, GitBranch, Activity, Sparkles, ArrowRight, DollarSign, Users } from 'lucide-react';
 import Sidebar from '@/components/Dashboard/Sidebar';
 import StatCard from '@/components/Dashboard/StatCard';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
-import { formatBytes, formatNumber } from '@/utils/formatters';
+import { formatBytes, formatNumber, formatCurrency } from '@/utils/formatters';
 import Button from '@/components/ui/Button';
 import { useRequireAuth } from '@/hooks/useAuth';
 
@@ -23,6 +23,8 @@ export default function Dashboard() {
     totalDatabases: 0,
     totalTables: 0,
     totalSize: 0,
+    revenue: 0,
+    userCount: 0,
   });
 
   useEffect(() => {
@@ -35,31 +37,39 @@ export default function Dashboard() {
     try {
       setLoading(true);
 
-      // Fetch databases
-      const response = await fetch('/api/clickhouse/databases');
-      const data = await response.json();
+      // Fetch databases and business metrics in parallel
+      const [dbResponse, metricsResponse] = await Promise.all([
+        fetch('/api/clickhouse/databases'),
+        fetch('/api/clickhouse/dashboard-metrics'),
+      ]);
 
-      if (response.ok && data.databases) {
-        setDatabases(data.databases);
+      const dbData = await dbResponse.json();
+      const metricsData = await metricsResponse.json();
 
-        // Calculate stats
-        const totalTables = data.databases.reduce((sum, db) => sum + (db.table_count || 0), 0);
-        const totalDatabases = data.total !== undefined ? data.total : data.databases.length;
+      let newStats = {
+        totalDatabases: 0,
+        totalTables: 0,
+        totalSize: 0,
+        revenue: 0,
+        userCount: 0,
+      };
 
-        setStats({
-          totalDatabases: totalDatabases || 0,
-          totalTables: totalTables || 0,
-          totalSize: 0, // TODO: Calculate from tables
-        });
-      } else {
-        // Handle error response
-        console.error('Failed to fetch databases:', data.error);
-        setStats({
-          totalDatabases: 0,
-          totalTables: 0,
-          totalSize: 0,
-        });
+      if (dbResponse.ok && dbData.databases) {
+        setDatabases(dbData.databases);
+        const totalTables = dbData.databases.reduce((sum, db) => sum + (db.table_count || 0), 0);
+        const totalDatabases = dbData.total !== undefined ? dbData.total : dbData.databases.length;
+
+        newStats.totalDatabases = totalDatabases || 0;
+        newStats.totalTables = totalTables || 0;
       }
+
+      if (metricsResponse.ok) {
+        newStats.revenue = metricsData.revenue || 0;
+        newStats.userCount = metricsData.userCount || 0;
+      }
+
+      setStats(newStats);
+
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -112,12 +122,26 @@ export default function Dashboard() {
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 -mt-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 -mt-16">
+            <StatCard
+              title="Total Revenue"
+              value={`$${formatNumber(stats.revenue)}`}
+              icon={DollarSign}
+              description="Lifetime Revenue"
+              gradient
+            />
+            <StatCard
+              title="Active Customers"
+              value={formatNumber(stats.userCount)}
+              icon={Users}
+              description="Distinct Users"
+              gradient
+            />
             <StatCard
               title="Total Databases"
               value={formatNumber(stats.totalDatabases)}
               icon={Database}
-              description="User-defined databases"
+              description="Managed databases"
               gradient
             />
             <StatCard
@@ -125,15 +149,6 @@ export default function Dashboard() {
               value={formatNumber(stats.totalTables)}
               icon={Table2}
               description="Across all databases"
-              gradient
-            />
-            <StatCard
-              title="Cluster Status"
-              value={clusterConfig?.isClustered ? 'Clustered' : 'Single Node'}
-              icon={Activity}
-              description={clusterConfig?.isClustered ?
-                `${clusterConfig.nodes.length} nodes` :
-                'Standalone instance'}
               gradient
             />
           </div>
